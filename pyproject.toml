@@ -7,7 +7,11 @@ requires-python = ">=3.11"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-markers = ["network: test needs the internet (never part of make check)"]
+pythonpath = ["."]
+markers = [
+    "network: test needs the internet (never part of make check)",
+    "data: test reads the built dataset; skipped if it has not been built",
+]
 
 [tool.ruff]
 line-length = 100
