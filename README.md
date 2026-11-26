@@ -22,6 +22,14 @@ make check    # lint + tests; offline only
 Real model calls are off by default. They require the `--allow-llm` flag and an API key
 (see `.env.example`).
 
+## Reproducing the baselines
+```bash
+make data                                   # build the experiment table
+python -m scripts.build_cell_lines          # cell-line genetics
+python -m scripts.run_baselines             # 4 methods x 5 seeds, about 7 minutes
+```
+Results depend on the pinned library versions in `requirements.txt`; see `docs/decision_log.md`.
+
 ## Layout
 - `ccagent/`: source code
 - `tests/`: offline tests

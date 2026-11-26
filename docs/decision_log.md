@@ -52,3 +52,21 @@ One entry per design choice: what was decided, why, and what it replaces. Newest
 **Decision:** Automatic matching to Cell Model Passports needs a unique name match and agreeing tissue. The 4 lines that need judgment live in `data/reference/cell_line_overrides.csv` with reasons. Each override states the CMP model name it expects, so a changed CMP release fails the build instead of silently changing genetics. Features: driver-mutation panel (genes mutated in at least 3 of our lines, plus mutated drug targets), amplification/deletion of drug-target genes, mean target-gene expression per line and drug, and a one-line summary per line for the LLM.
 **Check:** With the Nov 13 CMP files, every feature value, missing-value pattern, and summary is identical to iteration 1.
 **Known limitation:** For drugs whose ChEMBL target is a large complex (metformin: 51 genes; bortezomib: 38), "target expression" averages over every subunit. To be revisited in the response-model step.
+
+## 2026-11-25: Response model and baselines rebuilt
+**Decision:** The response model is a random forest (100 trees, `max_features` 0.3), retrained from scratch each round; the uncertainty is the spread across trees. Features: both drugs' Morgan fingerprints (radius 2, 256 bits), ChEMBL target multi-hot, and drug identity, all summed over the pair so order cannot matter; plus cell-line identity, tissue, Cell Model Passports genetics, and the smaller and larger of the two drugs' target-gene expression in that line. Methods: `uncertainty` (highest spread), `bo` (highest predicted value + kappa x spread, kappa = 1.0), and `shortlist_random` (10 at random from the agent's own 50-candidate shortlist).
+**Why the shortlist matters:** the shortlist is ordered by the same score BO uses, so its first 10 rows *are* BO's batch. The agent picks from that same list, which makes "agent vs BO" and "agent vs random-from-shortlist" a fair pair of comparisons rather than a comparison of different candidate pools. A test locks this property in.
+**Check:** Run against iteration 1's code in one environment, the rebuilt code makes identical picks and identical strong flags (bo and uncertainty, seed 0).
+
+## 2026-11-25: Library versions pinned; iteration 1's numbers depend on them
+**Decision:** `requirements.txt` pins numpy, pandas, scipy, scikit-learn and rdkit to the versions that produced the reported results (scikit-learn 1.9.1).
+**Why:** The random forest's output changes with the scikit-learn version. Run under scikit-learn 1.7.2, iteration 1's *own* code gives 30 strong combinations for BO on seed 0 instead of the reported 40, and 27 instead of 16 for uncertainty sampling. The code is unchanged; only the library differs. Any reported number is therefore tied to the pinned environment, and the write-up should say which versions were used.
+**Open:** confirm on the recording machine (scikit-learn 1.9.1) that the rebuilt baselines reproduce 10.6 / 15.4 / 45.2 / 47.2 across seeds 0-4.
+
+## 2026-11-26: Baselines reproduce iteration 1 exactly
+**Result:** On the recording machine (scikit-learn 1.9.1), all four methods reproduce iteration 1 seed for seed, not just on average: random 11, 8, 8, 16, 10; uncertainty 16, 11, 19, 19, 12; BO 40, 41, 43, 51, 61; random-from-shortlist 62, 25, 58, 41, 40. The genetics also rebuild identically from a fresh Cell Model Passports download, so the pipeline is verified end to end from its live sources.
+
+## 2026-11-26: Spread reported as the sample standard deviation
+**Decision:** Variation across seeds is reported with the sample standard deviation (dividing by n-1), not the population one (dividing by n) that iteration 1 used.
+**Effect on reported numbers:** random 2.9 -> 3.3, uncertainty 3.4 -> 3.8, BO 7.9 -> 8.8, random-from-shortlist 13.4 -> 15.0. The means are unchanged. The Nov 13 and Nov 20 updates to the research team quote the old figures, so the write-up should state the convention.
+**Why:** With 5 runs, dividing by n understates how much the result varies between seeds. The wider figures also make the headline comparison plainer: BO (47.2 +/- 8.8) and random-from-shortlist (45.2 +/- 15.0) are indistinguishable, so the shortlist, not the optimizer's ranking, is doing most of the work.

@@ -1,7 +1,9 @@
-numpy
-pandas
-scipy
-scikit-learn
+# Versions are pinned: the random forest's results depend on the scikit-learn version.
+numpy==2.4.6
+pandas==3.1.1
+scipy==1.17.1
+scikit-learn==1.9.1
+rdkit==2026.9.1
 matplotlib
 requests
 python-dotenv
