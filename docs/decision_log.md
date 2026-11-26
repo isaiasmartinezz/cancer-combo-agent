@@ -33,3 +33,12 @@ One entry per design choice: what was decided, why, and what it replaces. Newest
 ## 2026-11-25: Targets from ChEMBL, not DrugComb
 **Decision:** DrugComb's target-name columns are dropped.
 **Why:** They contain implausible targets (for example, thrombopoietin for 5-FU).
+
+## 2026-11-25: Lab, loop, and "strong" label rebuilt; verified against iteration 1
+**Decision:** `ccagent/lab.py` is the only way to learn outcomes. It hides held-out lines and refuses repeats, overspending, and unknown IDs, and it returns only synergy (Loewe) and inhibition. It has no method that reveals untested outcomes; evaluation (`ccagent/evaluation.py`) reads the data separately. `ccagent/loop.py` runs every method under the same rules: 250 experiments, batches of 10, the same random first batch per seed. `ccagent/strong.py` keeps the definition agreed with the research team (top 10% Loewe AND CSS cutoff giving 5%, ranked within cell line; secondary: same rule over all experiments).
+**Check:** Random selection reproduces iteration 1 exactly for seeds 0 to 4: the same 250 picks, the same strong flags, and the same counts (11, 8, 8, 16, 10). `tests/test_reproduce.py` locks this in.
+
+## 2026-11-25: Drug annotations: fetched, curated, and signed off as three separate tables
+**Decision:** `scripts/fetch_drug_annotations.py` re-fetches structures (PubChem) and targets/mechanisms (ChEMBL) with iteration 1's matching rules: exact name, then exact synonym, then PubChem's ChEMBL cross-reference, never free-text search. Mechanisms are looked up by parent compound. The result is committed as `drug_annotations_fetched.csv` with its fetch date. Manual choices live in `data/reference/drug_curation.csv`, each with a source: plain-words drug class, and targets/mechanism from cited abstracts for the 4 drugs ChEMBL lacks (GELDANAMYCIN, L778123, MK-4541, MRK-003). Literature can only fill a drug with no ChEMBL mechanism; the build refuses otherwise. `drug_signoff.csv` records Isaias's review of each row (pending / ok / fixed, reviewer, date).
+**Why:** Every value is traceable to a database or a citation, manual choices are reviewable as data instead of code, and no annotation counts as checked until a person has read it. In iteration 1 all 38 rows were still "needs sign-off".
+**Known gap:** the 4 literature drugs have no target gene symbols (ChEMBL has none), so expression features are unknown for them.
