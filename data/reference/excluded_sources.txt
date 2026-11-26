@@ -1,0 +1,23 @@
+# Sources the agent must never see (leakage control).
+# One rule per line: "pmid: <id>", "doi: <doi>", or "pattern: <regex>".
+# Patterns are matched case-insensitively against title + abstract (not authors or journal).
+# Add a rule only after confirming it, with a comment saying why.
+
+# O'Neil et al. 2016, Mol Cancer Ther: the screen the simulated lab replays.
+pmid: 26983881
+doi: 10.1158/1535-7163.MCT-15-0843
+
+# Papers that reuse the screen by name.
+pattern: o['’]?neil
+pattern: merck.{0,40}(screen|combination)
+pattern: drugcomb
+
+# Computational synergy-prediction papers. Most are trained or tested on the O'Neil screen, and
+# their abstracts often do not name it (DeepSynergy, PMID 29253077, says only "largest publicly
+# available synergy dataset"). The agent needs mechanism biology, not other models' predictions.
+# Kept tight: a looser "synergy ... predict" rule also removes biology papers where a gene is
+# "predictive of" combination response (e.g. PMID 37491889), which the agent should see.
+pattern: predict\w*\s+(\S+\s+){0,3}synerg
+pattern: synerg\w*\s+(score\s+)?prediction
+pattern: (deep|machine) learning.{0,80}synerg
+pattern: synerg\w*.{0,80}(deep|machine) learning
