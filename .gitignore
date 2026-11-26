@@ -1,0 +1,18 @@
+# environments and secrets
+.venv/
+.env
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+# data (rebuilt by scripts; see docs/data_sources.md)
+data/raw/
+data/processed/
+data/cache/
+# run outputs (final results are copied to results/ deliberately)
+runs/
+# editor / OS
+.DS_Store
+.idea/
+.vscode/
