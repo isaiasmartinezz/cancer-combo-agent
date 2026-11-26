@@ -14,7 +14,7 @@ ERLOTINIB,EGFR tyrosine kinase inhibitor,ATC L01EB + ChEMBL,,,,
 ETOPOSIDE,podophyllotoxin derivative; topoisomerase II inhibitor,ATC L01CB + ChEMBL,,,,
 GELDANAMYCIN,HSP90 inhibitor,PMID 9108479,Heat shock protein HSP 90,Binds the N-terminal ATP-binding pocket of Hsp90 and blocks its chaperone function,INHIBITOR,PMID 9108479; PMID 9295332
 GEMCITABINE,pyrimidine analogue; ribonucleotide reductase inhibitor,ATC L01BC + ChEMBL,,,,
-L778123,farnesyltransferase and geranylgeranyltransferase-I inhibitor,PMID 15248757,Protein farnesyltransferase; Protein geranylgeranyltransferase type I,Dual inhibitor of farnesyltransferase and geranylgeranyltransferase-I (blocks Ras prenylation),INHIBITOR,PMID 15248757; PMID 12479371
+L778123,farnesyltransferase and geranylgeranyltransferase-I inhibitor,PMID 15248757,Protein farnesyltransferase; Protein geranylgeranyltransferase type I,"Dual inhibitor of farnesyltransferase and geranylgeranyltransferase-I; designed to block K-Ras prenylation, which was not seen in patients (PMID 12479371)",INHIBITOR,PMID 15248757; PMID 12479371
 LAPATINIB,HER2 and EGFR tyrosine kinase inhibitor,ATC L01EH + ChEMBL,,,,
 METFORMIN,biguanide; mitochondrial complex I inhibitor,ATC A10BA + ChEMBL,,,,
 METHOTREXATE,folic acid analogue; DHFR inhibitor,ATC L01BA + ChEMBL,,,,
