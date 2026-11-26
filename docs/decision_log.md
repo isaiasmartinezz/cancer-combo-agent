@@ -47,3 +47,8 @@ One entry per design choice: what was decided, why, and what it replaces. Newest
 **Decision:** The 38 annotations were reviewed by an AI check: the 4 literature-sourced drugs against their 8 cited abstracts, the 3 indirect ChEMBL matches against the fetched records, and the rest for name/ID consistency plus standard pharmacology. `drug_signoff.csv` records this as "AI check, not yet confirmed by a person" until Isaias confirms.
 **Changed:** L778123's mechanism no longer says it "blocks Ras prenylation"; PMID 12479371 found no K-Ras prenylation inhibition in patients.
 **Open:** PACLITAXEL stays pending. "Tubulin inhibitor" (ChEMBL's wording) does not distinguish microtubule stabilizers (taxanes) from destabilizers (vinca alkaloids); a cited wording should replace it before agent runs.
+
+## 2026-11-25: Cell-line genetics rebuilt; matching decisions moved to data
+**Decision:** Automatic matching to Cell Model Passports needs a unique name match and agreeing tissue. The 4 lines that need judgment live in `data/reference/cell_line_overrides.csv` with reasons. Each override states the CMP model name it expects, so a changed CMP release fails the build instead of silently changing genetics. Features: driver-mutation panel (genes mutated in at least 3 of our lines, plus mutated drug targets), amplification/deletion of drug-target genes, mean target-gene expression per line and drug, and a one-line summary per line for the LLM.
+**Check:** With the Nov 13 CMP files, every feature value, missing-value pattern, and summary is identical to iteration 1.
+**Known limitation:** For drugs whose ChEMBL target is a large complex (metformin: 51 genes; bortezomib: 38), "target expression" averages over every subunit. To be revisited in the response-model step.

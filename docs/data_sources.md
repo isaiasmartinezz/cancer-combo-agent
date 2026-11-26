@@ -39,3 +39,10 @@ Columns of `oneil.csv`: `exp_id`, `drug_a`, `drug_b` (alphabetical), `cell_line`
   literature search, and its PubChem CID. 36 of 38 DrugComb names resolve to the same PubChem CID;
   the two platinum drugs resolve to a second PubChem record of the same compound (see `note`).
 - `heldout_lines.txt`: the 10 held-out cell lines (see `ccagent/data/split.py`).
+
+## Cell-line genetics
+- **Source:** Cell Model Passports, Wellcome Sanger Institute (https://cellmodelpassports.sanger.ac.uk), public files at https://cog.sanger.ac.uk/cmp/download/: `model_list_latest`, `mutations_summary_latest` (cancer-driver mutations), `cnv_summary_latest`, `rnaseq_latest` (streamed; only our models kept). The DepMap portal was not used: its automated downloads sit behind bot verification.
+- **Rebuild:** `python -m scripts.fetch_cell_lines` (internet; records sizes and sha256 in `data/reference/cmp_manifest.json`), then `python -m scripts.build_cell_lines` (offline).
+- **Matching** (`data/reference/cell_line_map.csv`): 35 of 39 lines match by name (ignoring case and punctuation) with agreeing tissue. 4 are decided by hand in `cell_line_overrides.csv`: MSTO = MSTO-211H, LNCAP = LNCaP-Clone-FGC, UWB1289+BRCA1 = UWB1.289 profile with BRCA1 unknown, COLO320DM = no confident match (genetics unknown).
+- **Coverage:** 34 lines have mutation data. Unknown values stay unknown, never filled with guesses.
+- **Note:** CMP classifies MSTO-211H as mesothelioma; the O'Neil screen lists it under lung.

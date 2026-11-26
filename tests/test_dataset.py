@@ -50,3 +50,15 @@ def test_duplicate_screen_experiments(table):
     flagged = table[table.duplicate_screen]
     assert len(flagged) == 315
     assert set(table.n_replicates) == {4, 8}
+
+
+GENETICS = Path("data/processed/cell_line_features.csv")
+
+
+@pytest.mark.skipif(not GENETICS.exists(), reason="genetics not built")
+def test_every_line_has_a_genetics_row_and_known_gaps():
+    feats = pd.read_csv(GENETICS).set_index("cell_line")
+    lines = set(pd.read_csv("data/processed/cell_lines.csv").cell_line)
+    assert set(feats.index) == lines
+    assert feats.loc["COLO320DM", "cmp_model_id"] == "unknown"
+    assert int(feats.has_genetics.sum()) == 34

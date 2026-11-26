@@ -1,0 +1,5 @@
+cell_line,cmp_model_id,expected_cmp_name,unknown_genes,reason
+MSTO,SIDM00640,MSTO-211H,,"Standard full name of MSTO; CMP lists tissue Lung, cancer type Mesothelioma"
+LNCAP,SIDM00683,LNCaP-Clone-FGC,,"Standard full name of LNCaP (synonyms LNCaP.FGC, LNCaP-ATCC)"
+UWB1289+BRCA1,SIDM00815,UWB1.289,BRCA1,"Engineered derivative of UWB1.289 with BRCA1 restored: parent profile used, BRCA1 set to unknown"
+COLO320DM,,,,"No confident match: CMP has COLO-320 and COLO-320-HSR, neither confirmed to be COLO 320DM"
