@@ -113,6 +113,9 @@ def test_masking_round_trips_and_respects_word_edges():
     assert masker.unname(code) == "SN-38"
     assert masker.text("SN-38 and 7-ethyl-10-hydroxycamptothecin") == f"{code} and {code}"
     assert masker.text("PSN-389 is unrelated") == "PSN-389 is unrelated"
+    vel = masker.name("ABT-888")
+    assert masker.text("veliparib-induced and Veliparib-loaded") == \
+        f"{vel}-induced and {vel}-loaded"
 
 
 def test_mask_codes_are_not_alphabetical():

@@ -22,7 +22,7 @@ def test_real_client_refused_without_key():
 
 def test_real_client_built_only_with_flag_and_key(monkeypatch):
     sentinel = object()
-    monkeypatch.setattr(guard, "_build_real_client", lambda key: sentinel)
+    monkeypatch.setattr(guard, "_build_real_client", lambda key, run_id="": sentinel)
     assert get_client("real", allow_llm=True, env={guard.API_KEY_ENV: "k"}) is sentinel
 
 

@@ -1,0 +1,9 @@
+{
+  "fetched_on": "2026-11-26",
+  "sources": [
+    "PubChem PUG REST synonyms",
+    "ChEMBL molecule + molecule_form"
+  ],
+  "kept": 4261,
+  "dropped": 1365
+}

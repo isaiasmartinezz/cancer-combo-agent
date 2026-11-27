@@ -7,5 +7,6 @@ rdkit==2026.9.1
 matplotlib
 requests
 python-dotenv
+anthropic==2.14.0  # only used by real agent runs (behind --allow-llm); tests never load it
 pytest
 ruff

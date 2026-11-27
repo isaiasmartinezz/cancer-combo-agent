@@ -25,15 +25,18 @@ def add_llm_args(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def _build_real_client(api_key: str) -> LLMClient:
-    # Added in the agent step. Kept separate so tests can prove the gate without a model.
-    raise NotImplementedError("the real client is added in the agent step")
+def _build_real_client(api_key: str, run_id: str = "") -> LLMClient:
+    # Kept separate so tests can prove the gate without building a client.
+    from ccagent.llm.real import RealClient
+
+    return RealClient(api_key, run_id=run_id)
 
 
 def get_client(
     mode: str = "fake",
     allow_llm: bool = False,
     env: Mapping[str, str] | None = None,
+    run_id: str = "",
 ) -> LLMClient:
     """Return the fake client by default; the real one only if explicitly allowed."""
     if mode == "fake":
@@ -46,4 +49,4 @@ def get_client(
     key = env.get(API_KEY_ENV, "")
     if not key:
         raise LLMNotAllowed(f"real model calls need {API_KEY_ENV} to be set")
-    return _build_real_client(key)
+    return _build_real_client(key, run_id)

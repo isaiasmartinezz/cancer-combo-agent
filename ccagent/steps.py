@@ -23,6 +23,26 @@ VERDICTS = ("keep", "revise", "drop")
 EXPLORE = "explore"
 
 
+def _obj(properties: dict) -> dict:
+    return {"type": "object", "properties": properties, "required": list(properties),
+            "additionalProperties": False}
+
+
+_STR, _STRS = {"type": "string"}, {"type": "array", "items": {"type": "string"}}
+# The shapes the three answers must take. Code still checks everything a schema cannot.
+SCHEMAS = {
+    "hypothesize": _obj({"hypotheses": {"type": "array", "items": _obj({
+        "statement": _STR, "drugs": _STRS, "level": {"type": "string", "enum": list(LEVELS)},
+        "predicted_responders": _STRS, "rationale": _STR, "evidence_ids": _STRS})}}),
+    "critique": _obj({"verdicts": {"type": "array", "items": _obj({
+        "id": _STR, "verdict": {"type": "string", "enum": list(VERDICTS)},
+        "revised_statement": _STR, "reason": _STR, "evidence_ids": _STRS})}}),
+    "select": _obj({"picks": {"type": "array", "items": _obj({
+        "exp_id": _STR, "hypothesis_id": _STR,
+        "level": {"type": "string", "enum": list(LEVELS)}, "reason": _STR})}}),
+}
+
+
 @dataclass
 class StepRecord:
     """One step's calls, for the run's model-call log."""
@@ -50,19 +70,23 @@ def _missing(item: dict, fields: dict[str, type], label: str) -> list[str]:
 
 def run_step(client: LLMClient, system: str, prompt: str, step: str, key: str,
              check) -> tuple[list | None, StepRecord]:
-    """check(items) -> problems. Returns (items, record), with items None after two failures."""
+    """The answer format is also sent as a JSON schema, which a real model is held to."""
+    # check(items) -> problems. Returns (items, record), with items None after two failures.
     record, feedback = StepRecord(step), ""
     for attempt in (1, 2):
         content = prompt + (f"\n\nYour previous answer had these problems; fix them:\n{feedback}"
                             if feedback else "")
-        response: LLMResponse = client.complete(system, content)
+        response: LLMResponse = client.complete(system, content, SCHEMAS[step])
         items, problems = _parse(response.text, key)
         if items is not None:
             problems = check(items)
         record.attempts.append({
             "attempt": attempt, "prompt": content, "response": response.text,
             "problems": problems, "input_tokens": response.input_tokens,
-            "output_tokens": response.output_tokens, "cost_usd": response.cost_usd})
+            "output_tokens": response.output_tokens, "cost_usd": response.cost_usd,
+            "cache_read_tokens": response.cache_read_tokens,
+            "cache_write_tokens": response.cache_write_tokens,
+            "model": response.model, "stop_reason": response.stop_reason})
         if not problems:
             record.ok = True
             return items, record
