@@ -21,9 +21,37 @@ def test_real_client_refused_without_key():
 
 
 def test_real_client_built_only_with_flag_and_key(monkeypatch):
-    sentinel = object()
-    monkeypatch.setattr(guard, "_build_real_client", lambda key, run_id="": sentinel)
-    assert get_client("real", allow_llm=True, env={guard.API_KEY_ENV: "k"}) is sentinel
+    built = []
+    monkeypatch.setattr(guard, "_build_real_client",
+                        lambda api_key, run_id="", key="1": built.append((api_key, key)) or key)
+    assert get_client("real", allow_llm=True, env={guard.API_KEY_ENV: "k"}) == "1"
+    assert built == [("k", "1")]
+
+
+def test_each_key_has_its_own_variable_and_spend_log(monkeypatch):
+    built = []
+    monkeypatch.setattr(guard, "_build_real_client",
+                        lambda api_key, run_id="", key="1": built.append((api_key, key)))
+    with pytest.raises(LLMNotAllowed, match="LLM_API_KEY_2"):  # key 1 set, key 2 not
+        get_client("real", allow_llm=True, env={"LLM_API_KEY": "k1"}, key="2")
+    get_client("real", allow_llm=True, env={"LLM_API_KEY_2": "k2"}, key="2")
+    assert built == [("k2", "2")]
+    assert guard.spend_log("1") != guard.spend_log("2")
+    with pytest.raises(ValueError):
+        guard.spend_log("3")
+
+
+def test_the_real_client_gets_its_keys_ledger(monkeypatch):
+    from ccagent.llm import real
+    captured = {}
+
+    class Stub:
+        def __init__(self, api_key, run_id="", ledger=None):
+            captured["ledger"] = ledger
+
+    monkeypatch.setattr(real, "RealClient", Stub)
+    guard._build_real_client("k2", key="2")
+    assert str(captured["ledger"].path) == guard.spend_log("2")
 
 
 def test_unknown_mode_rejected():

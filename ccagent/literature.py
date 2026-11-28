@@ -20,7 +20,7 @@ import re
 import time
 import xml.etree.ElementTree as ET
 from collections.abc import Callable, Iterable
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 EXCLUSIONS = Path("data/reference/excluded_sources.txt")
@@ -35,6 +35,28 @@ Fetch = Callable[[str, dict], str]
 
 class CacheMiss(RuntimeError):
     """A search was not in the cache and the network was not allowed."""
+
+
+REDACTED_LINE = "[another cell line]"
+
+
+def line_pattern(lines: Iterable[str]) -> re.Pattern | None:
+    """Matches the cell lines as papers write them: any case, with or without hyphens or spaces
+    ("HT29", "HT-29"; "ZR751", "ZR-75-1"), the NCI prefix optional ("NCIH23", "NCI-H23",
+    "H23"), and a "+BRCA1"-style suffix included. None if there are no lines."""
+    alternatives = []
+    for line in sorted(set(lines), key=len, reverse=True):
+        base, _, suffix = line.partition("+")
+        chars = re.sub(r"[-\s]", "", base)
+        prefix = ""
+        if re.match(r"(?i)NCIH\d", chars):
+            prefix, chars = r"(?:N[-\s]?C[-\s]?I[-\s]?)?", chars[3:]
+        body = prefix + r"[-\s]?".join(map(re.escape, chars))
+        if suffix:
+            body += rf"(?:\s*\+\s*{re.escape(suffix)})?"
+        end = r"(?!\d)" if chars[-1].isdigit() else r"(?![A-Za-z0-9])"
+        alternatives.append(rf"(?<![A-Za-z0-9]){body}{end}")
+    return re.compile("|".join(alternatives), re.I) if alternatives else None
 
 
 @dataclass(frozen=True)
@@ -202,11 +224,15 @@ def class_terms(path: Path = CLASS_TERMS) -> dict[str, list[str]]:
 
 class Literature:
     def __init__(self, pubmed: PubMed, exclusions: Exclusions, names: dict[str, list[str]],
-                 classes: dict[str, list[str]] | None = None):
+                 classes: dict[str, list[str]] | None = None, hide_lines: Iterable[str] = ()):
         """names: drug_id -> every name to search it by (the dataset ID and the generic name).
-        classes: drug_id -> class phrases (class_terms()); None turns class evidence off."""
+        classes: drug_id -> class phrases (class_terms()); None turns class evidence off.
+        hide_lines: the held-out cell lines; their names are replaced in every paper returned,
+        so no paper can tell the agent how a held-out line responded (decision log, Nov 27)."""
         self.pubmed, self.exclusions, self.names = pubmed, exclusions, names
         self.classes = classes or {}
+        self.hide = line_pattern(hide_lines)
+        self.redacted_log: list[str] = []  # source_ids that had a held-out line name replaced
         self.excluded_log: list[tuple[str, str]] = []  # (source_id, reason), for the run audit
         self.low_information_log: list[str] = []
 
@@ -224,9 +250,16 @@ class Literature:
             if LOW_INFORMATION.search(paper.title):
                 self.low_information_log.append(paper.source_id)
                 continue
-            kept.append(paper)
+            kept.append(self._redact(paper))
             titles.add(key)
         return kept[:n]
+
+    def _redact(self, paper: Paper) -> Paper:
+        if self.hide is None or not self.hide.search(paper.title + " " + paper.abstract):
+            return paper
+        self.redacted_log.append(paper.source_id)
+        return replace(paper, title=self.hide.sub(REDACTED_LINE, paper.title),
+                       abstract=self.hide.sub(REDACTED_LINE, paper.abstract))
 
     def _term(self, drug: str, field: str = "tiab") -> str:
         return drug_term(self.names.get(drug, [drug]), field)

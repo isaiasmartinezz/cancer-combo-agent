@@ -1,0 +1,108 @@
+Choose exactly 10 experiments from the shortlist, by exp_id, for the next batch. Balance testing the most promising hypotheses against experiments that would tell competing hypotheses apart; a few "explore" picks for untested drug classes are fine. Each pick names the hypothesis it tests (or "explore"), an explanation level, and a one-sentence reason:
+{"picks": [{"exp_id": "E00001", "hypothesis_id": "H1" | "explore", "level": "mechanistic" | "cross_cancer" | "statistical", "reason": "..."}]}
+
+## Shortlist
+exp_id,drug_a,drug_b,cell_line,tissue,pred_mean,pred_std
+E03715,Drug 06,Drug 21,HT144,skin,-0.16,1.24
+E04261,Drug 06,Drug 02,HT144,skin,0.02,1.05
+E03754,Drug 06,Drug 31,HT144,skin,-0.2,1.18
+E04456,Drug 06,Drug 24,HT144,skin,-0.22,1.2
+E04534,Drug 06,Drug 15,HT144,skin,0.06,0.91
+E03676,Drug 06,Drug 33,HT144,skin,0.0,0.97
+E04066,Drug 06,Drug 37,HT144,skin,-0.09,1.06
+E04183,Drug 06,Drug 18,HT144,skin,-0.01,0.97
+E03949,Drug 06,Drug 28,HT144,skin,-0.1,1.05
+E04222,Drug 06,Drug 23,HT144,skin,0.03,0.93
+E04300,Drug 06,Drug 01,HT144,skin,0.12,0.83
+E04768,Drug 06,Drug 36,HT144,skin,0.13,0.81
+E04651,Drug 06,Drug 29,HT144,skin,-0.0,0.94
+E04264,Drug 06,Drug 02,LNCAP,prostate,-0.04,0.98
+E04807,Drug 06,Drug 27,HT144,skin,0.01,0.93
+E02272,Drug 05,Drug 06,HT144,skin,-0.13,1.06
+E03793,Drug 06,Drug 25,HT144,skin,0.15,0.77
+E04495,Drug 06,Drug 14,HT144,skin,0.08,0.83
+E04027,Drug 06,Drug 34,HT144,skin,-0.06,0.97
+E03718,Drug 06,Drug 21,LNCAP,prostate,-0.26,1.16
+E04573,Drug 06,Drug 22,HT144,skin,-0.2,1.09
+E03832,Drug 06,Drug 20,HT144,skin,-0.54,1.43
+E03910,Drug 06,Drug 08,HT144,skin,-0.05,0.93
+E04459,Drug 06,Drug 24,LNCAP,prostate,-0.28,1.14
+E04105,Drug 06,Drug 26,HT144,skin,0.02,0.83
+E04339,Drug 06,Drug 10,HT144,skin,-0.16,1.01
+E03952,Drug 06,Drug 28,LNCAP,prostate,-0.17,1.02
+E03871,Drug 06,Drug 04,HT144,skin,0.02,0.83
+E03705,Drug 06,Drug 21,A2058,skin,-0.3,1.14
+E04144,Drug 06,Drug 11,HT144,skin,-0.03,0.87
+E04729,Drug 06,Drug 07,HT144,skin,-0.05,0.9
+E04417,Drug 06,Drug 13,HT144,skin,-0.16,1.01
+E04690,Drug 06,Drug 38,HT144,skin,-0.12,0.97
+E00907,Drug 16,Drug 06,HT144,skin,-0.22,1.06
+E04251,Drug 06,Drug 02,A2058,skin,-0.12,0.95
+E03739,Drug 06,Drug 21,UACC62,skin,-0.31,1.14
+E04612,Drug 06,Drug 35,HT144,skin,-0.07,0.89
+E04654,Drug 06,Drug 29,LNCAP,prostate,-0.07,0.9
+E04186,Drug 06,Drug 18,LNCAP,prostate,-0.08,0.9
+E04924,Drug 06,Drug 32,HT144,skin,-0.01,0.83
+E04069,Drug 06,Drug 37,LNCAP,prostate,-0.16,0.98
+E03757,Drug 06,Drug 31,LNCAP,prostate,-0.29,1.11
+E03679,Drug 06,Drug 33,LNCAP,prostate,-0.08,0.89
+E04810,Drug 06,Drug 27,LNCAP,prostate,-0.06,0.88
+E03835,Drug 06,Drug 20,LNCAP,prostate,-0.61,1.43
+E09799,Drug 20,Drug 18,HT144,skin,-1.73,1.63
+E07381,Drug 21,Drug 24,HT144,skin,-2.05,1.6
+E07342,Drug 21,Drug 13,HT144,skin,-1.43,1.58
+E10033,Drug 20,Drug 13,HT144,skin,-1.51,1.57
+E09802,Drug 20,Drug 18,LNCAP,prostate,-1.77,1.56
+
+
+## Hypotheses
+[
+ {
+  "id": "H2",
+  "statement": "Drug 06 with Drug 21 resembles pairs that scored well.",
+  "drugs": [
+   "Drug 06",
+   "Drug 21"
+  ],
+  "level": "statistical",
+  "predicted_responders": [],
+  "responder_feature": "",
+  "rationale": "scripted",
+  "evidence_ids": [],
+  "status": "open",
+  "n_tests": 0,
+  "score": null
+ }
+]
+
+## Results so far
+20 experiments run so far.
+Highest joint:
+drug_a,drug_b,cell_line,synergy,inhibition,joint
+Drug 06,Drug 30,HT144,12.875,87.847,0.867
+Drug 06,Drug 30,LNCAP,8.923,79.038,0.572
+Drug 06,Drug 30,A2058,8.318,81.439,0.526
+Drug 06,Drug 30,OV90,7.074,80.846,0.433
+Drug 06,Drug 30,A375,6.927,67.49,0.239
+Drug 06,Drug 30,SW-620,4.057,85.97,0.208
+Drug 06,Drug 30,NCIH1650,3.135,67.502,0.139
+Drug 06,Drug 30,SW837,2.784,70.483,0.129
+
+Lowest joint:
+drug_a,drug_b,cell_line,synergy,inhibition,joint
+Drug 08,Drug 10,T-47D,0.031,28.59,-1.225
+Drug 37,Drug 01,DLD1,4.156,25.163,-1.582
+Drug 16,Drug 12,SW837,0.993,6.219,-2.406
+Drug 21,Drug 20,MDAMB436,-40.957,36.585,-3.664
+
+Tested pairs involving shortlisted drugs (pct_in_line: rank within the cell line, 1 = best):
+drug_a,drug_b,lines_tested,mean_pct_in_line,best_line
+Drug 17,Drug 26,1,1.0,OVCAR3
+Drug 16,Drug 06,1,1.0,T-47D
+Drug 06,Drug 30,11,1.0,HT144
+Drug 01,Drug 27,1,1.0,CAOV3
+Drug 16,Drug 12,1,0.5,SW837
+Drug 21,Drug 20,1,0.5,MDAMB436
+Drug 08,Drug 10,1,0.5,T-47D
+Drug 37,Drug 01,1,0.5,DLD1
+Drug 12,Drug 14,1,0.5,OVCAR3

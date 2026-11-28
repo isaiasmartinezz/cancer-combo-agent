@@ -26,9 +26,20 @@ from dataclasses import asdict, dataclass, field
 import pandas as pd
 
 LEVELS = ("mechanistic", "cross_cancer", "statistical")
-MIN_TESTS = 2
+# 4, not iteration 1's 2 (decision log, Nov 27): with no real effect and random ranks, 2 tests
+# label a hypothesis supported 25% of the time and refuted 24%; 4 tests, 16% each.
+MIN_TESTS = 4
 SUPPORT, REFUTE = 0.65, 0.35
 MAX_NEW, MAX_SHOWN, MAX_RETIRED, MAX_CRITIQUE = 6, 12, 6, 8
+# A mechanistic hypothesis names the feature that defines its responders and may name at most
+# half the lines it chooses from (decision log, Nov 27): it cannot hedge by naming nearly all of
+# them, and a comparison group is always left. Common features are why the cap is not smaller:
+# TP53 is mutated in about half the visible lines.
+RESPONDER_SHARE = 0.5
+
+
+def max_responders(n_lines: int) -> int:
+    return max(1, int(n_lines * RESPONDER_SHARE))
 _SHOW_ORDER = {"supported": 0, "open": 1}
 
 assert MAX_NEW <= MAX_CRITIQUE, "every new hypothesis must fit in one round's critique"
@@ -41,6 +52,7 @@ class Hypothesis:
     drugs: tuple[str, ...]
     level: str
     predicted_responders: tuple[str, ...] = ()
+    responder_feature: str = ""  # e.g. "BRAF V600E": what the responders have in common
     rationale: str = ""
     evidence_ids: tuple[str, ...] = ()
     round_added: int = 0
@@ -61,6 +73,7 @@ class Hypothesis:
 class HypothesisBook:
     items: dict[str, Hypothesis] = field(default_factory=dict)
     events: list[dict] = field(default_factory=list)  # every change, for the run record
+    _before_critique: dict = field(default_factory=dict, repr=False)  # for uncritique
 
     # ---------- changes ----------
 
@@ -77,6 +90,7 @@ class HypothesisBook:
                 drugs=tuple(proposal["drugs"]),
                 level=proposal["level"],
                 predicted_responders=tuple(proposal.get("predicted_responders", ())),
+                responder_feature=proposal.get("responder_feature", ""),
                 rationale=proposal.get("rationale", ""),
                 evidence_ids=tuple(proposal.get("evidence_ids", ())),
                 round_added=round_num,
@@ -148,23 +162,36 @@ class HypothesisBook:
         return [f"{h.id} ({h.status}): {h.statement[:120]}" for h in gone[:k]]
 
     def to_critique(self, new: list[Hypothesis], k: int = MAX_CRITIQUE) -> list[Hypothesis]:
-        """New hypotheses first, then those with new results since their last critique (most
-        new results first). Marks the returned ones as critiqued at their current n_tests."""
+        """New hypotheses first, then older ones never critiqued (a critique answer failed), then
+        those with new results since their last critique (most new results first). Marks the
+        returned ones as critiqued at their current n_tests; `uncritique` undoes that."""
         new_ids = {h.id for h in new}
-        changed = [h for h in self.active() if h.id not in new_ids and h.n_tests > 0
-                   and h.critiqued_at != h.n_tests]
-        changed.sort(key=lambda h: -(h.n_tests - (h.critiqued_at or 0)))
+        changed = [h for h in self.active() if h.id not in new_ids and (
+            h.critiqued_at is None or (h.n_tests > 0 and h.critiqued_at != h.n_tests))]
+        changed.sort(key=lambda h: (h.critiqued_at is not None,
+                                    -(h.n_tests - (h.critiqued_at or 0))))
         picked = ([h for h in new if h.status != "dropped"] + changed)[:k]
+        self._before_critique = {h.id: h.critiqued_at for h in picked}
         for h in picked:
             h.critiqued_at = h.n_tests
         return picked
 
-    def options(self, shortlist: pd.DataFrame, new: list[Hypothesis]) -> list[Hypothesis]:
+    def uncritique(self, judged: list[Hypothesis], round_num: int) -> None:
+        """The critique answer failed twice: these were not judged after all. Never-critiqued
+        ones stay uncitable and are first in line next round."""
+        for h in judged:
+            h.critiqued_at = self._before_critique.get(h.id)
+        self._log(round_num, None, "critique failed; not judged: "
+                  + ", ".join(h.id for h in judged))
+
+    def options(self, shortlist: pd.DataFrame, new: list[Hypothesis],
+                critiqued_only: bool = False) -> list[Hypothesis]:
         """Hypotheses a pick may cite this round: those shown, plus this round's surviving new
-        ones (a brand-new hypothesis has no results yet, so it would not rank into `shown`)."""
+        ones (a brand-new hypothesis has no results yet, so it would not rank into `shown`).
+        With critique on, only hypotheses that have been critiqued may be cited."""
         out = {h.id: h for h in self.shown(shortlist)}
         out.update({h.id: h for h in new if h.status != "dropped"})
-        return list(out.values())
+        return [h for h in out.values() if not critiqued_only or h.critiqued_at is not None]
 
     # ---------- record ----------
 

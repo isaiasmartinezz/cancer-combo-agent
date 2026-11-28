@@ -5,6 +5,7 @@ from ccagent.hypotheses import (
     MAX_CRITIQUE,
     MAX_NEW,
     MAX_SHOWN,
+    MIN_TESTS,
     Hypothesis,
     HypothesisBook,
 )
@@ -38,12 +39,19 @@ def test_rescore_statuses_from_percentiles():
     book = HypothesisBook()
     good, bad, thin = book.add([proposal(["A", "B"]), proposal(["C", "D"]),
                                 proposal(["E", "F"])], round_num=1)
-    hist = history([("A", "B", "L1", 9), ("A", "B", "L2", 8), ("C", "D", "L1", 1),
-                    ("C", "D", "L2", 2), ("E", "F", "L1", 5), ("X", "Y", "L1", 4)])
+    lines = ["L1", "L2", "L3", "L4"]
+    hist = history([("A", "B", line, v) for line, v in zip(lines, (12, 11, 10, 9), strict=True)]
+                   + [("C", "D", line, v) for line, v in zip(lines, (1, 2, 3, 4), strict=True)]
+                   + [("E", "F", line, v) for line, v in zip(lines[:3], (5, 6, 7), strict=True)])
     book.rescore(hist, "joint", round_num=2)
-    assert (good.status, good.n_tests, good.score) == ("supported", 2, 0.917)
-    assert (bad.status, bad.score) == ("refuted", 0.25)
-    assert (thin.status, thin.n_tests) == ("open", 1)  # one test is not enough
+    # A+B ranks 8-11 of the 11 results; C+D ranks 1-4
+    assert (good.status, good.n_tests, good.score) == ("supported", MIN_TESTS, 0.864)
+    assert (bad.status, bad.score) == ("refuted", 0.227)
+    assert (thin.status, thin.n_tests) == ("open", 3)  # three tests are not enough
+
+
+def test_status_needs_four_tests():
+    assert MIN_TESTS == 4  # decision log, Nov 27: 2 tests label 1 in 4 no-effect ideas
 
 
 def test_responder_gap_points_the_right_way():
@@ -129,6 +137,18 @@ def test_critique_is_capped_and_always_fits_every_new_hypothesis():
     picked = book.to_critique(new)
     assert len(picked) == MAX_CRITIQUE
     assert {h.id for h in new} <= {h.id for h in picked}
+
+
+def test_failed_critique_leaves_hypotheses_uncitable_and_first_in_line():
+    book = HypothesisBook()
+    judged = book.to_critique(book.add([proposal(["A", "B"])], 1))
+    book.uncritique(judged, 1)  # the critique answer failed twice
+    short = shortlist([("A", "B")])
+    assert book.options(short, judged, critiqued_only=True) == []
+    assert [h.id for h in book.options(short, judged)] == ["H1"]  # no_critique arm: citable
+    new = book.add([proposal(["C", "D"])], 2)
+    assert [h.id for h in book.to_critique(new)] == ["H2", "H1"]  # queued behind new ones
+    assert {h.id for h in book.options(short, new, critiqued_only=True)} == {"H1", "H2"}
 
 
 def test_options_add_new_hypotheses_to_those_shown():

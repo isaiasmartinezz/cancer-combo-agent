@@ -1,0 +1,74 @@
+Challenge each hypothesis below against the literature and the results so far. Look for claims the cited sources do not support, results that contradict it, and mechanisms that do not apply to the predicted cell lines, including responders that lack the stated responder feature. Give exactly one verdict per hypothesis:
+{"verdicts": [{"id": "H1", "verdict": "keep" | "revise" | "drop", "revised_statement": "(only for revise)", "reason": "one sentence", "evidence_ids": []}]}
+
+## Hypotheses
+[
+ {
+  "id": "H2",
+  "statement": "BEZ-235 with CYCLOPHOSPHAMIDE resembles pairs that scored well.",
+  "drugs": [
+   "BEZ-235",
+   "CYCLOPHOSPHAMIDE"
+  ],
+  "level": "statistical",
+  "predicted_responders": [],
+  "responder_feature": "",
+  "rationale": "scripted",
+  "evidence_ids": [],
+  "status": "open",
+  "n_tests": 0,
+  "score": null
+ },
+ {
+  "id": "H1",
+  "statement": "BEZ-235 with GELDANAMYCIN resembles pairs that scored well.",
+  "drugs": [
+   "BEZ-235",
+   "GELDANAMYCIN"
+  ],
+  "level": "statistical",
+  "predicted_responders": [],
+  "responder_feature": "",
+  "rationale": "scripted",
+  "evidence_ids": [],
+  "status": "supported",
+  "n_tests": 11,
+  "score": 0.75
+ }
+]
+
+## Results so far
+20 experiments run so far.
+Highest joint:
+drug_a,drug_b,cell_line,synergy,inhibition,joint
+BEZ-235,GELDANAMYCIN,HT144,12.875,87.847,0.867
+BEZ-235,GELDANAMYCIN,LNCAP,8.923,79.038,0.572
+BEZ-235,GELDANAMYCIN,A2058,8.318,81.439,0.526
+BEZ-235,GELDANAMYCIN,OV90,7.074,80.846,0.433
+BEZ-235,GELDANAMYCIN,A375,6.927,67.49,0.239
+BEZ-235,GELDANAMYCIN,SW-620,4.057,85.97,0.208
+BEZ-235,GELDANAMYCIN,NCIH1650,3.135,67.502,0.139
+BEZ-235,GELDANAMYCIN,SW837,2.784,70.483,0.129
+
+Lowest joint:
+drug_a,drug_b,cell_line,synergy,inhibition,joint
+ERLOTINIB,MK-4827,T-47D,0.031,28.59,-1.225
+L778123,MK-4541,DLD1,4.156,25.163,-1.582
+ABT-888,MK-5108,SW837,0.993,6.219,-2.406
+CYCLOPHOSPHAMIDE,DINACICLIB,MDAMB436,-40.957,36.585,-3.664
+
+Tested pairs involving shortlisted drugs (pct_in_line: rank within the cell line, 1 = best):
+drug_a,drug_b,lines_tested,mean_pct_in_line,best_line
+5-FU,LAPATINIB,1,1.0,OVCAR3
+ABT-888,BEZ-235,1,1.0,T-47D
+BEZ-235,GELDANAMYCIN,11,1.0,HT144
+MK-4541,TOPOTECAN,1,1.0,CAOV3
+ABT-888,MK-5108,1,0.5,SW837
+CYCLOPHOSPHAMIDE,DINACICLIB,1,0.5,MDAMB436
+ERLOTINIB,MK-4827,1,0.5,T-47D
+L778123,MK-4541,1,0.5,DLD1
+MK-5108,MRK-003,1,0.5,OVCAR3
+
+
+## Literature
+(no literature retrieved)

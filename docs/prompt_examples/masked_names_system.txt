@@ -1,0 +1,76 @@
+You help a cancer screening lab decide which drug-combination experiments to run next. Each experiment tests one drug pair in one cancer cell line. The lab reports two numbers: a synergy score (higher means the drugs work better together than either alone predicts) and a growth-inhibition score.
+
+Base every claim on the material given to you: the reference tables, the literature excerpts, and the results the lab has returned. Cite literature only by the IDs shown with it (for example PMID:12345), and never cite an ID that was not shown. When a claim rests on general pharmacology rather than a provided source, say so and leave it uncited. Prefer specific, testable mechanisms, and say plainly when the evidence is thin.
+
+Be brief: one sentence per hypothesis statement, reason, or verdict explanation; at most two sentences per rationale. Answer with JSON only, in the shape the task describes.
+
+## Drugs
+- Drug 01: selective androgen receptor modulator (SARM); targets: Androgen receptor
+- Drug 02: AKT inhibitor; targets: Serine/threonine-protein kinase AKT
+- Drug 03: proteasome inhibitor; targets: 26S proteasome
+- Drug 04: anthracycline; topoisomerase II inhibitor; targets: DNA topoisomerase 2-alpha; DNA
+- Drug 05: WEE1 kinase inhibitor; targets: Wee1-like protein kinase
+- Drug 06: dual PI3K / mTOR inhibitor; targets: Serine/threonine-protein kinase mTOR; PI3-kinase class I
+- Drug 07: multi-kinase inhibitor (VEGFR, PDGFR, KIT, FLT3, RET, CSF1R); targets: Macrophage colony-stimulating factor 1 receptor; Mast/stem cell growth factor receptor Kit; Receptor-type tyrosine-protein kinase FLT3; Platelet-derived growth factor receptor; Vascular endothelial growth factor receptor; Proto-oncogene tyrosine-protein kinase receptor Ret; Vascular endothelial growth factor receptor 2; Platelet-derived growth factor receptor beta; Platelet-derived growth factor receptor alpha; Vascular endothelial growth factor receptor 1; Vascular endothelial growth factor receptor 3
+- Drug 08: EGFR tyrosine kinase inhibitor; targets: Epidermal growth factor receptor
+- Drug 09: vinca alkaloid; tubulin inhibitor; targets: Tubulin
+- Drug 10: PARP inhibitor; targets: Poly [ADP-ribose] polymerase 2; Poly [ADP-ribose] polymerase 1
+- Drug 11: biguanide; mitochondrial complex I inhibitor; targets: Mitochondrial complex I (NADH dehydrogenase); Glycerol-3-phosphate dehydrogenase, mitochondrial
+- Drug 12: Aurora A kinase inhibitor; targets: Aurora kinase A
+- Drug 13: mTOR inhibitor; targets: Serine/threonine-protein kinase mTOR
+- Drug 14: gamma-secretase inhibitor (blocks Notch signaling); targets: Gamma-secretase
+- Drug 15: platinum compound; acts on DNA; targets: DNA
+- Drug 16: PARP inhibitor; targets: PARP 1, 2 and 3
+- Drug 17: pyrimidine analogue; thymidylate synthase inhibitor; targets: Thymidylate synthase; DNA; RNA
+- Drug 18: folic acid analogue; DHFR inhibitor; targets: Dihydrofolate reductase
+- Drug 19: vinca alkaloid; tubulin inhibitor; targets: Tubulin
+- Drug 20: CDK inhibitor (CDK1, 2, 5, 9); targets: Cyclin-dependent kinase 1; Cyclin-dependent kinase 2; Cyclin-dependent kinase 5; Cyclin-dependent kinase 9
+- Drug 21: nitrogen mustard alkylating agent; acts on DNA; targets: DNA
+- Drug 22: taxane; tubulin inhibitor; targets: Tubulin
+- Drug 23: cytotoxic antibiotic; acts on DNA; targets: DNA
+- Drug 24: CHK1 inhibitor; targets: Serine/threonine-protein kinase Chk1
+- Drug 25: glucocorticoid (glucocorticoid receptor agonist); targets: Glucocorticoid receptor
+- Drug 26: HER2 and EGFR tyrosine kinase inhibitor; targets: Receptor tyrosine-protein kinase erbB-2; Epidermal growth factor receptor
+- Drug 27: topoisomerase I inhibitor; targets: DNA topoisomerase 1
+- Drug 28: podophyllotoxin derivative; topoisomerase II inhibitor; targets: DNA topoisomerase II
+- Drug 29: topoisomerase I inhibitor; targets: DNA topoisomerase 1
+- Drug 30: HSP90 inhibitor; targets: Heat shock protein HSP 90
+- Drug 31: multi-kinase inhibitor (BCR-ABL, SRC, KIT, PDGFR-beta, EPHA2); targets: Tyrosine-protein kinase ABL1; Platelet-derived growth factor receptor beta; Mast/stem cell growth factor receptor Kit; Ephrin type-A receptor 2; SRC; Bcr/Abl fusion protein
+- Drug 32: HDAC inhibitor; targets: Histone deacetylase 1; Histone deacetylase 3; Protein deacetylase HDAC6; Histone deacetylase 2
+- Drug 33: platinum compound; acts on DNA; targets: DNA
+- Drug 34: pyrimidine analogue; ribonucleotide reductase inhibitor; targets: Ribonucleoside-diphosphate reductase RR1; DNA polymerase (alpha/delta/epsilon)
+- Drug 35: MEK1/2 inhibitor; targets: Dual specificity mitogen-activated protein kinase kinase 1; Dual specificity mitogen-activated protein kinase kinase 2
+- Drug 36: alkylating agent; acts on DNA; targets: DNA
+- Drug 37: farnesyltransferase and geranylgeranyltransferase-I inhibitor; targets: Protein farnesyltransferase; Protein geranylgeranyltransferase type I
+- Drug 38: multi-kinase inhibitor (RAF, VEGFR, PDGFR-beta, KIT, FLT3, RET); targets: RAF proto-oncogene serine/threonine-protein kinase; Platelet-derived growth factor receptor beta; Mast/stem cell growth factor receptor Kit; Receptor-type tyrosine-protein kinase FLT3; Serine/threonine-protein kinase B-raf; Vascular endothelial growth factor receptor; Proto-oncogene tyrosine-protein kinase receptor Ret
+
+## Cell lines (genetics; results only where the lab has returned them)
+- A2058: Melanoma; MSI: MSS; driver mutations: PTEN L112Q, MAP2K1 P124S, TP53 V274F, BRAF V600E, PTEN V175fs*3; amplified drug targets: none
+- A375: Melanoma; MSI: MSS; driver mutations: EP300 (protein change not given), TRRAP S722F, BRAF V600E, CDKN2A E61*; amplified drug targets: none
+- A427: Non-Small Cell Lung Carcinoma; MSI: MSS; driver mutations: KRAS G12D; amplified drug targets: PIK3CA
+- CAOV3: Ovarian Carcinoma; MSI: MSS; driver mutations: TP53 Q136*, BCORL1 W1557*; amplified drug targets: BCR, PIK3CA, PIK3CB
+- COLO320DM: genetics unknown (no confident Cell Model Passports match)
+- DLD1: Colorectal Carcinoma; MSI: unknown; driver mutations: unknown; amplified drug targets: unknown
+- EFM192B: Breast Carcinoma; MSI: unknown; driver mutations: unknown; amplified drug targets: unknown
+- ES2: Ovarian Carcinoma; MSI: MSS; driver mutations: BRAF V600E, MAP2K1 D67N, TP53 S241F; amplified drug targets: none
+- HCT116: Colorectal Carcinoma; MSI: MSI; driver mutations: RPL22 K15fs*5, PRDM2 V1490fs*74, KMT2D R2443fs*6, RNF6 N283fs*9, NBEA N1121fs*9, NF1 I679fs*21, NF1 P678fs*10, STAT5B Q368fs*2, SMARCA4 S122fs*7, KMT2B K553fs*46, KMT2B G1879fs*16, BAX E41fs*19, MSH6 F1088fs*5, ACVR2A K437fs*5, BMPR2 N583fs*44, PTPRT P1094fs*6, EP300 M1470fs*26, EP300 N1700fs*9, FLT4 Q423fs*70, KMT2C K2797fs*26, KMT2C I1344fs*1, CDKN2A E33fs*15, BCORL1 P1681fs*20, PIK3CA H1047R, FLT4 S1046L, ATM A1127V, KRAS G13D, ACVR2A K435*; amplified drug targets: none
+- HT144: Melanoma; MSI: MSS; driver mutations: ATM W2845*, BRAF V600E; amplified drug targets: TOP1
+- LNCAP: Prostate Carcinoma; MSI: MSI; driver mutations: RPL22 K15fs*5, ARID1A G285fs*78, PTEN K6fs*4, RNF6 L593fs*2, KMT2B V314fs*20, BAX E41fs*19, ACVR2A K437fs*5, PTPRT R881fs*20, KMT2C F4496fs*21, KMT2C E2798fs*11, RET R77H, ATM Q912*, PTPRB R92*, PTPRT D924G, KDR A1065T, PIK3R1 R639*, MALT1 (protein change not given), ARID1B E2204*, KMT2C (protein change not given); amplified drug targets: none
+- MDAMB436: Breast Carcinoma; MSI: MSS; driver mutations: TP53 E204fs*7, ARID1B G858fs*41, PIK3R1 Y73*; amplified drug targets: FLT4
+- MSTO: Mesothelioma; MSI: MSS; driver mutations: none in panel; amplified drug targets: none
+- NCI-H460: Non-Small Cell Lung Carcinoma; MSI: MSS; driver mutations: KRAS Q61H, STK11 Q37*, PIK3CA E545K; amplified drug targets: none
+- NCIH1650: Non-Small Cell Lung Carcinoma; MSI: MSS; driver mutations: EGFR E746_A750delELREA; amplified drug targets: EGFR, SRC, TOP1
+- NCIH2122: Non-Small Cell Lung Carcinoma; MSI: MSS; driver mutations: KRAS G12C, TP53 C176F, STK11 P281fs*6; amplified drug targets: none
+- OCUBM: Breast Carcinoma; MSI: MSS; driver mutations: TP53 G244S, STAT5B (protein change not given), POLQ V310G, PIK3CA H1047R, NIPBL (protein change not given), FLT4 Q423fs*4, KMT2C D1951fs*9; amplified drug targets: ERBB2
+- OV90: Ovarian Carcinoma; MSI: MSS; driver mutations: BRAF N486_P490delNVTAP, TP53 S215R, SMAD4 R445*, CDKN2A A86D; amplified drug targets: AKT2, BRAF, POLD1
+- OVCAR3: Ovarian Carcinoma; MSI: MSS; driver mutations: TP53 R248Q, PIK3R1 (protein change not given); amplified drug targets: AKT2, EPHA2, MTOR
+- PA1: Ovarian Carcinoma; MSI: MSS; driver mutations: ACVR2A R400H; amplified drug targets: none
+- RKO: Colorectal Carcinoma; MSI: MSI; driver mutations: RPL22 K15fs*5, PRDM2 K1489fs*6, ARID1A P1115fs*46, ARID1A D1850fs*33, RNF6 L593fs*4, NBEA E44fs*2, NF1 Y628fs*3, NF1 N2341fs*5, KMT2B P1821fs*74, MSH6 Y1066fs*1, ACVR2A K437fs*5, BMPR2 N583fs*44, EP300 K292fs*25, EP300 M1470fs*26, NIPBL K603fs*11, KMT2C K2797fs*26, BCORL1 A74fs*20, BCORL1 P1681fs*20, AKT3 Q78K, BMPR2 E581G, KMT2D G3465*, PTPRB (protein change not given), PIK3CA H1047R, TRRAP R3063W, BRAF V600E; amplified drug targets: ABL1
+- SK-OV-3: Ovarian Carcinoma; MSI: MSI; driver mutations: TP53 S90fs*33, MALT1 K273fs*32, APC T1556fs*9, ARID1A Q586*, ATM (protein change not given), POLD1 (protein change not given), EP300 Y1414C, PIK3CA H1047R, FBXW7 R505L; amplified drug targets: ERBB2
+- SKMES1: Squamous Cell Lung Carcinoma; MSI: MSS; driver mutations: TP53 E298*, NF1 G849fs*16; amplified drug targets: none
+- SW-620: Colorectal Carcinoma; MSI: MSS; driver mutations: KRAS G12V, TP53 P309S, TP53 R273H, SMAD4 (protein change not given), LRP1B R4062*, EP300 P1440L, APC Q1338*, KMT2C A1685S; amplified drug targets: EGFR
+- SW837: Colorectal Carcinoma; MSI: MSS; driver mutations: KRAS G12C, TP53 R248W, ACVR2A (protein change not given), APC R213*, APC R1450*, FBXW7 L403fs*34; amplified drug targets: none
+- T-47D: Breast Carcinoma; MSI: MSS; driver mutations: ARID1A Q944*, TP53 L194F, PIK3CA H1047R; amplified drug targets: PIK3CA
+- UACC62: Melanoma; MSI: MSS; driver mutations: TRRAP S722F, BRAF V600E, PTEN P248fs*5; amplified drug targets: none
+- UWB1289: Ovarian Carcinoma; MSI: MSS; driver mutations: TP53 R209fs*6, NF1 (protein change not given); amplified drug targets: PIK3CA
+- VCAP: Prostate Carcinoma; MSI: MSS; driver mutations: TP53 R248W, MSH6 F1088fs*5; amplified drug targets: FLT4

@@ -20,7 +20,7 @@ import sheldon.core.llm as sllm
 from sheldon.core.cache import DiskCache
 
 from ccagent.llm import settings
-from ccagent.llm.guard import API_KEY_ENV, LLMNotAllowed
+from ccagent.llm.guard import LLMNotAllowed, key_env
 
 MODEL, EFFORT = settings.AGENT_MODEL, settings.AGENT_EFFORT
 
@@ -57,7 +57,7 @@ class SheldonFake(sllm.FakeLLM, SheldonLLM):
     """SHELDON's scripted offline model, with our request settings (so tests see them)."""
 
 
-def make_llm(kind: str, allow_llm: bool = False, env=None, cache_path=None,
+def make_llm(kind: str, allow_llm: bool = False, env=None, cache_path=None, key: str = "1",
              **fake_kwargs) -> sllm.LLM:
     """'fake' -> SHELDON's scripted offline model. 'real' -> needs the flag and the key."""
     configure()
@@ -70,9 +70,10 @@ def make_llm(kind: str, allow_llm: bool = False, env=None, cache_path=None,
     env = os.environ if env is None else env
     if not allow_llm:
         raise LLMNotAllowed("real model calls need the --allow-llm flag")
-    key = env.get(API_KEY_ENV)
-    if not key:
-        raise LLMNotAllowed(f"real model calls need {API_KEY_ENV} to be set")
-    llm = SheldonLLM(**common, api_key=key, cache=DiskCache(cache_path, enabled=True))
-    llm._backend_impl = _Backend(key)
+    name = key_env(key)
+    api_key = env.get(name)
+    if not api_key:
+        raise LLMNotAllowed(f"real model calls need {name} to be set")
+    llm = SheldonLLM(**common, api_key=api_key, cache=DiskCache(cache_path, enabled=True))
+    llm._backend_impl = _Backend(api_key)
     return llm

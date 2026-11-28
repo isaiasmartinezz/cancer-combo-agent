@@ -6,8 +6,9 @@ shortlist, run its first 10). That is a wiring check, not a result. Real calls n
 
 Same model and effort as the agent (settings.py). Tools: only the benchmark's own (probes = []
 removes SHELDON's web search, web fetch and shell). Money: each seed's SHELDON cap (max_usd) is
-the smaller of --max-usd and what the shared budget has left, and the spend is written to the
-shared spend log (runs/llm_spend.jsonl) at our list prices, so the $30 cap counts it.
+the smaller of --max-usd and what the key's budget has left, and the spend is written to that
+key's spend log (settings.KEYS; --key 2 uses LLM_API_KEY_2) at our list prices, so its $30 cap
+counts it. A seed whose run log already exists is skipped unless --overwrite is given.
 
 Writes runs/sheldon/sheldon_joint_seed<N>.csv (run log); SHELDON's own run folders, traces and
 model-call cache go under runs/sheldon/.
@@ -21,7 +22,7 @@ import time
 from pathlib import Path
 
 from ccagent.llm import settings
-from ccagent.llm.guard import add_llm_args
+from ccagent.llm.guard import add_llm_args, spend_log
 from ccagent.llm.real import SpendLedger
 from ccagent.llm.sheldon_client import EFFORT, MODEL, make_llm
 from ccagent.sheldon_arm import NAME, scripted_bo_responder
@@ -68,19 +69,25 @@ def main() -> None:
     parser.add_argument("--no-literature", action="store_true")
     parser.add_argument("--out", default=str(OUT))
     parser.add_argument("--dry-run", action="store_true", help="print the config and stop")
+    parser.add_argument("--overwrite", action="store_true",
+                        help="rerun seeds whose run log already exists (skipped by default)")
     add_llm_args(parser)
     args = parser.parse_args()
     out = Path(args.out)
     os.environ["SHELDON_RUNS"] = str(out / "sheldon_runs")
-    ledger = SpendLedger()
+    ledger = SpendLedger(spend_log(args.key))
     if args.client == "real":
         from dotenv import load_dotenv
 
         load_dotenv()
-        print(f"model {MODEL}, effort {EFFORT}; spent so far ${ledger.total():.2f} of "
-              f"${ledger.budget_usd:.2f}", flush=True)
+        print(f"model {MODEL}, effort {EFFORT}; key {args.key} spent so far "
+              f"${ledger.total():.2f} of ${ledger.budget_usd:.2f}", flush=True)
 
     for seed in args.seeds:
+        done = out / f"sheldon_joint_seed{seed}.csv"
+        if done.exists() and not args.overwrite and not args.dry_run:
+            print(f"seed {seed} skipped: already finished ({done}); --overwrite reruns it")
+            continue
         cap = args.max_usd
         if args.client == "real":
             cap = min(cap, ledger.budget_usd - ledger.total() - MARGIN)
@@ -94,7 +101,8 @@ def main() -> None:
         llm = make_llm(args.client, allow_llm=args.allow_llm,
                        cache_path=out / "cache" / "llm.db",
                        tool_responder=scripted_bo_responder) if args.client == "fake" else \
-            make_llm("real", allow_llm=args.allow_llm, cache_path=out / "cache" / "llm.db")
+            make_llm("real", allow_llm=args.allow_llm, cache_path=out / "cache" / "llm.db",
+                     key=args.key)
         started = time.time()
         try:
             summary = asyncio.run(run_experiment(cfg, llm=llm))

@@ -91,7 +91,8 @@ def make_context(literature: bool = True) -> Context:
         annotations=pd.read_csv("data/reference/drug_annotations.csv"),
         line_summaries=dict(zip(summaries["cell_line"], summaries["summary"], strict=True)),
         tissue=cell_line_tissue(),
-        literature=Literature(PubMed(), Exclusions.from_file(), drug_names(), class_terms())
+        literature=Literature(PubMed(), Exclusions.from_file(), drug_names(), class_terms(),
+                              hide_lines=read_heldout())
         if literature else None)
 
 
@@ -161,7 +162,7 @@ class OneilCombo(Benchmark):
     def _question(self, trial: Trial) -> str:
         drugs = sorted(set(self.ctx.annotations["drug_id"]))
         lines = sorted(set(trial.lab.candidates()["cell_line"]))
-        first = trial.history[prompts.RESULT_COLS].to_csv(index=False)
+        first = prompts.rounded(trial.history[prompts.RESULT_COLS]).to_csv(index=False)
         return "\n".join([
             "# Choose drug-combination experiments",
             "",
@@ -220,7 +221,7 @@ class OneilCombo(Benchmark):
                 return ProbeResult(summary=str(e), ok=False)
             return ProbeResult(summary=(
                 f"{len(rows)} results ({trial.lab.budget_remaining()} experiments left):\n"
-                + rows[prompts.RESULT_COLS].to_csv(index=False)), limit=8000)
+                + prompts.rounded(rows[prompts.RESULT_COLS]).to_csv(index=False)), limit=8000)
 
         async def results_so_far() -> ProbeResult:
             short = trial.shortlist if trial.shortlist is not None else trial.history
@@ -257,6 +258,7 @@ class OneilCombo(Benchmark):
                         "compounds)": by_class}
             if not together and not by_class:
                 return ProbeResult(summary="no cached literature for this query")
+            prompts.check_papers(set(self.ctx.heldout), together + by_class)
             return ProbeResult(summary=prompts.READING_NOTE + "\n\n" +
                                prompts.fmt_literature(sections, NO_MASK), limit=6000)
 
@@ -342,8 +344,10 @@ class OneilCombo(Benchmark):
             papers = fetch()
         except CacheMiss:
             papers = []
-        text = prompts.fmt_literature({heading: papers}, NO_MASK) if papers \
-            else "no cached literature for this query"
+        prompts.check_papers(set(self.ctx.heldout), papers)
+        # the reading note goes with every paper, as in the agent's prompts (decision log, Nov 27)
+        text = prompts.READING_NOTE + "\n\n" + prompts.fmt_literature({heading: papers}, NO_MASK) \
+            if papers else "no cached literature for this query"
         return ProbeResult(summary=text, limit=6000)
 
     # -- budget -----------------------------------------------------------

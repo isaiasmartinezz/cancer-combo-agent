@@ -1,0 +1,39 @@
+drug_id,query,pubmed_count,famous,fetched
+5-FU,"(""5-FU""[tiab] OR ""fluorouracil""[tiab])",54102,True,2026-11-27
+ABT-888,"(""ABT-888""[tiab] OR ""veliparib""[tiab])",608,False,2026-11-27
+AZD1775,"(""AZD1775""[tiab] OR ""adavosertib""[tiab])",304,False,2026-11-27
+BEZ-235,"(""BEZ-235""[tiab] OR ""dactolisib""[tiab])",168,False,2026-11-27
+BORTEZOMIB,"(""BORTEZOMIB""[tiab] OR ""bortezomib""[tiab])",11878,True,2026-11-27
+CARBOPLATIN,"(""CARBOPLATIN""[tiab] OR ""carboplatin""[tiab])",20931,True,2026-11-27
+CYCLOPHOSPHAMIDE,"(""CYCLOPHOSPHAMIDE""[tiab] OR ""cyclophosphamide""[tiab])",61720,True,2026-11-27
+DASATINIB,"(""DASATINIB""[tiab] OR ""dasatinib""[tiab])",5486,True,2026-11-27
+DEXAMETHASONE,"(""DEXAMETHASONE""[tiab] OR ""dexamethasone""[tiab])",74764,True,2026-11-27
+DINACICLIB,"(""DINACICLIB""[tiab] OR ""dinaciclib""[tiab])",260,False,2026-11-27
+DOXORUBICIN,"(""DOXORUBICIN""[tiab] OR ""doxorubicin""[tiab])",64611,True,2026-11-27
+ERLOTINIB,"(""ERLOTINIB""[tiab] OR ""erlotinib""[tiab])",8234,True,2026-11-27
+ETOPOSIDE,"(""ETOPOSIDE""[tiab] OR ""etoposide""[tiab])",24807,True,2026-11-27
+GELDANAMYCIN,"(""GELDANAMYCIN""[tiab] OR ""geldanamycin""[tiab])",1858,True,2026-11-27
+GEMCITABINE,"(""GEMCITABINE""[tiab] OR ""gemcitabine""[tiab])",23979,True,2026-11-27
+L778123,"(""L-778123""[tiab] OR ""L778123""[tiab])",12,False,2026-11-27
+LAPATINIB,"(""LAPATINIB""[tiab] OR ""lapatinib""[tiab])",3529,True,2026-11-27
+METFORMIN,"(""METFORMIN""[tiab] OR ""metformin""[tiab])",36610,True,2026-11-27
+METHOTREXATE,"(""METHOTREXATE""[tiab] OR ""methotrexate""[tiab])",54618,True,2026-11-27
+MITOMYCINE,"(""MITOMYCINE""[tiab] OR ""mitomycin""[tiab])",19768,True,2026-11-27
+MK-2206,"(""MK-2206""[tiab])",692,False,2026-11-27
+MK-4541,"(""MK-4541""[tiab])",2,False,2026-11-27
+MK-4827,"(""MK-4827""[tiab] OR ""niraparib""[tiab])",1019,True,2026-11-27
+MK-5108,"(""MK-5108""[tiab])",25,False,2026-11-27
+MK-8669,"(""MK-8669""[tiab] OR ""ridaforolimus""[tiab])",118,False,2026-11-27
+MK-8776,"(""MK-8776""[tiab] OR ""SCH 900776""[tiab])",59,False,2026-11-27
+MRK-003,"(""MRK-003""[tiab])",18,False,2026-11-27
+OXALIPLATIN,"(""OXALIPLATIN""[tiab] OR ""oxaliplatin""[tiab])",17723,True,2026-11-27
+PACLITAXEL,"(""PACLITAXEL""[tiab] OR ""paclitaxel""[tiab])",44257,True,2026-11-27
+PD325901,"(""PD0325901""[tiab] OR ""PD325901""[tiab])",483,False,2026-11-27
+SN-38,"(""SN-38""[tiab])",2025,True,2026-11-27
+SORAFENIB,"(""SORAFENIB""[tiab] OR ""sorafenib""[tiab])",14064,True,2026-11-27
+SUNITINIB,"(""SUNITINIB""[tiab] OR ""sunitinib""[tiab])",7972,True,2026-11-27
+TEMOZOLOMIDE,"(""TEMOZOLOMIDE""[tiab] OR ""temozolomide""[tiab])",12747,True,2026-11-27
+TOPOTECAN,"(""TOPOTECAN""[tiab] OR ""topotecan""[tiab])",3654,True,2026-11-27
+VINBLASTINE,"(""VINBLASTINE""[tiab] OR ""vinblastine""[tiab])",10392,True,2026-11-27
+VINORELBINE,"(""VINORELBINE""[tiab] OR ""vinorelbine""[tiab])",4201,True,2026-11-27
+ZOLINZA,"(""ZOLINZA""[tiab] OR ""vorinostat""[tiab])",2195,True,2026-11-27

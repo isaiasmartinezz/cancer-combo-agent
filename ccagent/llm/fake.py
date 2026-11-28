@@ -55,7 +55,8 @@ def top_k_responder(system: str, prompt: str) -> str:
         return json.dumps({"hypotheses": [{
             "statement": f"{first.drug_a} with {first.drug_b} resembles pairs that scored well.",
             "drugs": [first.drug_a, first.drug_b], "level": "statistical",
-            "predicted_responders": [], "rationale": "scripted", "evidence_ids": []}]})
+            "predicted_responders": [], "responder_feature": "",
+            "rationale": "scripted", "evidence_ids": []}]})
     if prompt.startswith("Challenge each"):
         ids = [h["id"] for h in json.loads(section("Hypotheses"))]
         return json.dumps({"verdicts": [{"id": i, "verdict": "keep", "reason": "scripted"}

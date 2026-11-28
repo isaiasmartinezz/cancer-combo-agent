@@ -64,11 +64,12 @@ def fake_fetch(endpoint, params):
     return f"<PubmedArticleSet>{articles}</PubmedArticleSet>"
 
 
-def make_agent(tmp_path, ablation="none", client=None, masker=None):
+def make_agent(tmp_path, ablation="none", client=None, masker=None, fetch=fake_fetch,
+               hide_lines=(HELD,)):
     drugs = [f"D{i}" for i in range(8)]
     lit = None if ablation == "no_literature" else Literature(
-        PubMed(tmp_path, fetch=fake_fetch, allow_network=True), Exclusions.parse(""),
-        {d: [d] for d in drugs})
+        PubMed(tmp_path, fetch=fetch, allow_network=True), Exclusions.parse(""),
+        {d: [d] for d in drugs}, hide_lines=hide_lines)
     if ablation == "masked_names" and masker is None:
         masker = Masker({d: [] for d in drugs})
     return AgentChooser(
@@ -119,6 +120,40 @@ def test_no_critique_ablation_makes_no_critique_calls(tmp_path):
     agent = make_agent(tmp_path, "no_critique")
     run(agent)
     assert {c["step"] for c in agent.calls} == {"hypothesize", "select"}
+
+
+def test_failed_critique_means_nothing_new_can_be_cited(tmp_path):
+    def broken_critique(system, prompt):
+        return "not json" if prompt.startswith("Challenge each") else \
+            top_k_responder(system, prompt)
+    agent = make_agent(tmp_path, client=FakeLLMClient(responder=broken_critique))
+    run(agent)
+    selects = [c["prompt"] for c in agent.calls if c["step"] == "select"]
+    assert selects and all("## Hypotheses\n(none yet)" in p for p in selects)
+    assert any("critique failed" in e["event"] for e in agent.book.events)
+    critiques = [c for c in agent.calls if c["step"] == "critique" and c["attempt"] == 1]
+    assert '"id": "H1"' in critiques[1]["prompt"]  # round 1's hypothesis is judged again
+
+
+def fetch_naming_heldout(endpoint, params):
+    """As fake_fetch, but every abstract reports a result in the held-out line."""
+    return fake_fetch(endpoint, params).replace(
+        "D1 inhibits growth.", f"D1 with D2 was synergistic in {HELD} and L1 cells.")
+
+
+def test_papers_never_name_a_heldout_line(tmp_path):
+    agent = make_agent(tmp_path, fetch=fetch_naming_heldout)
+    run(agent)
+    lit_prompts = [c["prompt"] for c in agent.calls if "## Literature" in c["prompt"]]
+    assert lit_prompts and all(HELD not in p for p in lit_prompts)
+    assert any("[another cell line] and L1 cells" in p for p in lit_prompts)
+    assert agent.literature.redacted_log  # every redaction is recorded
+
+
+def test_unredacted_literature_is_refused(tmp_path):
+    agent = make_agent(tmp_path, fetch=fetch_naming_heldout, hide_lines=())
+    with pytest.raises(agent_module.prompts.LeakError):
+        run(agent)
 
 
 def test_masked_run_shows_no_drug_names(tmp_path):
@@ -172,6 +207,7 @@ def mechanistic_responder(system, prompt):
     if prompt.startswith("Propose up to"):
         for h in out["hypotheses"]:
             h["level"], h["predicted_responders"] = "mechanistic", ["L1"]
+            h["responder_feature"] = "tissue"
     if prompt.startswith("The run is over"):
         bad = "Your previous answer had these problems" not in prompt
         for p in out["predictions"]:

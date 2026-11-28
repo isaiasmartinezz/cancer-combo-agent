@@ -11,6 +11,7 @@ from ccagent.literature import (
     Paper,
     PubMed,
     drug_term,
+    line_pattern,
     parse_pubmed_xml,
 )
 
@@ -210,3 +211,37 @@ def test_class_terms_table_covers_every_drug():
     table = class_terms()
     assert set(table) == drugs
     assert all(t.strip() == t and t for terms in table.values() for t in terms)
+
+
+# ---------- held-out cell lines are redacted from paper text (Nov 27) ----------
+
+HELDOUT = ["A2780", "HT29", "KPL1", "LOVO", "NCIH23", "NCIH520", "RPMI7951", "SKMEL30",
+           "UWB1289+BRCA1", "ZR751"]
+
+
+@pytest.mark.parametrize("written", ["HT-29 cells", "ht29", "NCI-H23", "H23 cells", "NCI H520",
+                                     "ZR-75-1", "LoVo", "UWB1289 + BRCA1", "SK-MEL-30",
+                                     "RPMI-7951", "KPL-1", "A2780cis"])
+def test_heldout_names_are_found_however_written(written):
+    assert line_pattern(HELDOUT).search(written)
+
+
+@pytest.mark.parametrize("other", ["HT290", "NCI-H2122", "NCI-H460", "HCT116", "SK-MEL-3",
+                                   "A27801", "lovastatin", "H2347", "SKMEL300"])
+def test_other_lines_and_words_are_left_alone(other):
+    assert not line_pattern(HELDOUT).search(other)
+
+
+def test_literature_replaces_heldout_names_and_logs_it(tmp_path):
+    def fake(endpoint, params):
+        if endpoint == "esearch.fcgi":
+            return json.dumps({"esearchresult": {"idlist": ["1", "2"]}})
+        return ("<PubmedArticleSet>"
+                + article("1", "Veliparib in HT-29 cells", "Synergy in HT29 and HCT116.")
+                + article("2", "Veliparib alone", "No cell lines named.") + "</PubmedArticleSet>")
+    lit = Literature(PubMed(tmp_path, fetch=fake, allow_network=True), Exclusions.parse(""), {},
+                     hide_lines=HELDOUT)
+    first, second = lit.search("veliparib", 2)
+    assert first.title == "Veliparib in [another cell line] cells"
+    assert first.abstract == "Synergy in [another cell line] and HCT116."
+    assert second.abstract == "No cell lines named." and lit.redacted_log == ["PMID:1"]

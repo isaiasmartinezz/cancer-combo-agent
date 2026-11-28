@@ -6,8 +6,13 @@ runs. If it is ever changed, every earlier agent result must be rerun (see docs/
 AGENT_MODEL: str | None = "claude-sonnet-5-5"
 AGENT_EFFORT = "medium"
 MAX_TOKENS = 16000
-BUDGET_USD = 30.0  # hard cap on the summed cost of every real call, across all runs
-SPEND_LOG = "runs/llm_spend.jsonl"
+BUDGET_USD = 30.0  # hard cap per key on the summed cost of its real calls, across all runs
+
+# One environment variable, spend log and $BUDGET_USD cap per API key (decision log, Nov 27).
+# Key 1 is the original; key 2 keeps its own log, so each key's cap is checked separately.
+KEYS = {"1": ("LLM_API_KEY", "runs/llm_spend.jsonl"),
+        "2": ("LLM_API_KEY_2", "runs/llm_spend_key2.jsonl")}
+SPEND_LOG = KEYS["1"][1]
 
 # USD per token: (input, output, cache read, cache write), list prices as of 2026-11.
 # Thinking is billed as output. Cache writes cost 1.25x input (5-minute lifetime).

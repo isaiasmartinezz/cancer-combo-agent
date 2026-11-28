@@ -5,12 +5,14 @@ from ccagent.hypotheses import HypothesisBook
 from ccagent.literature import Paper
 from ccagent.masking import Masker
 from ccagent.prompts import (
+    ABSTRACT_CHARS,
     SYSTEM,
     LeakError,
     check_inputs,
     critique_prompt,
     fmt_literature,
     fmt_results,
+    heldout_prompt,
     hypothesize_prompt,
     reference_block,
     select_prompt,
@@ -44,20 +46,29 @@ def all_prompts(masker=None):
     book = HypothesisBook()
     new = book.add([{"statement": "veliparib plus carboplatin works in BRCA lines",
                      "drugs": ["ABT-888", "CARBOPLATIN"], "level": "mechanistic",
-                     "predicted_responders": ["L1"], "rationale": "PARP trapping",
+                     "predicted_responders": ["L1"], "responder_feature": "BRCA1 loss",
+                     "rationale": "PARP trapping",
                      "evidence_ids": ["PMID:1"]}], 1)
     lit = {"ABT-888 + CARBOPLATIN": [Paper("1", "Veliparib and carboplatin",
                                            "Veliparib potentiated carboplatin in BRCA1 cells.")]}
     hist, short = history_with_traps(), shortlist()
     return [
         hypothesize_prompt(short, hist, "joint score", "joint", new, ["H9 (refuted): x"], lit,
-                           masker, 6),
+                           masker, 6, 14),
         critique_prompt(new, hist, short, "joint", lit, masker),
         select_prompt(short, hist, "joint", new, 2, masker),
     ]
 
 
 # ---------- leakage ----------
+
+def test_answer_formats_show_single_braces():
+    """Templates escape JSON braces as {{ }}; every one must go through .format()."""
+    held = heldout_prompt([], {"X": "genetics unknown"}, "joint score", Masker())
+    for prompt in [*all_prompts(), held]:
+        assert "{{" not in prompt and "}}" not in prompt
+        assert '{"' in prompt  # the answer format is still there
+
 
 def test_no_prompt_contains_strong_flags_cutoffs_or_hidden_values():
     for prompt in [SYSTEM, *all_prompts()]:
@@ -90,9 +101,24 @@ def test_reference_block_lists_only_visible_lines():
     assert "HELD1" not in block and "secret" not in block
 
 
-def test_abstracts_are_trimmed():
-    text = fmt_literature({"x": [Paper("1", "T", "a" * 1000)]}, Masker())
-    assert "a" * 400 + "..." in text and "a" * 401 not in text
+def test_abstracts_show_their_end_from_a_sentence_start():
+    background = "Background words here. " * 40
+    finding = "We found the pair synergistic in KRAS mutant cells."
+    text = fmt_literature({"x": [Paper("1", "T", background + finding)]}, Masker())
+    shown = text.rsplit("\n", 1)[1]
+    assert shown.endswith(finding) and shown.startswith("...Background")
+    assert len(shown) <= ABSTRACT_CHARS + 3
+    short = fmt_literature({"x": [Paper("1", "T", finding)]}, Masker())
+    assert short.endswith(finding) and "..." not in short
+
+
+def test_result_numbers_are_rounded_but_ranked_at_full_precision():
+    history = pd.DataFrame({"drug_a": ["A", "A"], "drug_b": ["B", "C"], "cell_line": ["L1"] * 2,
+                            "synergy": [12.874675113616199, 12.8744], "inhibition": [80.0, 70.0],
+                            "joint": [0.12345, 0.12341]})
+    text = fmt_results(history, history, "joint", Masker())
+    assert "12.875" in text and "12.8746" not in text
+    assert text.index("A,B,L1") < text.index("A,C,L1")  # the higher one is still first
 
 
 # ---------- masked names ----------

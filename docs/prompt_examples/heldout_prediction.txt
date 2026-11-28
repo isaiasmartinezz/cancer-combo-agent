@@ -1,0 +1,38 @@
+The run is over and no more experiments will be chosen. Below are cell lines this run never tested, with their genetics only (no results exist for you), and your mechanistic hypotheses. For each hypothesis, name the untested lines that have its responder feature, so the mechanism should make the pair score high on the target: joint score (both synergy and growth inhibition high relative to other experiments in the same cell line; the smaller of the two standardized, line-adjusted scores). Use only the mechanism and each line's genetics and tissue; name at most 5, and an empty list is right when no line fits. One prediction per hypothesis:
+{"predictions": [{"hypothesis_id": "H1", "predicted_responders": ["LINE"], "reason": "one sentence"}]}
+
+## Untested cell lines (genetics only)
+- A2780: Ovarian Carcinoma; MSI: MSS; driver mutations: ARID1A R1721fs*4, ARID1B A933fs*10, SMARCA4 T910M, SMARCA4 R1356W, ARID1A Q1430*, PIK3CA E365K; amplified drug targets: none
+- HT29: Colorectal Carcinoma; MSI: MSS; driver mutations: TP53 R273H, SMAD4 Q311*, POLQ S1819*, PIK3CA P449T, APC E853*, BRAF V600E, APC T1556fs*3; amplified drug targets: none
+- KPL1: Breast Carcinoma; MSI: unknown; driver mutations: unknown; amplified drug targets: unknown
+- LOVO: Colorectal Carcinoma; MSI: MSI; driver mutations: RPL22 K15fs*5, RPL22 (protein change not given), PRDM2 V1490fs*74, ARID1A F2141fs*59, KMT2D P648fs*2, KMT2D P647fs*283, KMT2D H77fs*53, NBEA N1121fs*9, STAT5B Q368fs*9, BAX E41fs*33, BAX E41fs*19, LRP1B G485fs*56, ACVR2A K437fs*5, BMPR2 N583fs*44, POLQ K933fs*2, NIPBL K603fs*11, APC M1431fs*42, KMT2C K2797fs*26, BCORL1 P1681fs*20, KRAS G13D, MALT1 R551*, PIK3CB E1051K, FBXW7 R505C, APC R1114*; amplified drug targets: none
+- NCIH23: Non-Small Cell Lung Carcinoma; MSI: MSS; driver mutations: TP53 M246I, STK11 W332*, SMARCA4 E1567*, LRP1B R4084L, PTPRT G495V, RET R77L, KRAS G12C; amplified drug targets: KDR, KIT, PDGFRA, SRC, TOP1
+- NCIH520: Squamous Cell Lung Carcinoma; MSI: MSS; driver mutations: CDKN2A G45fs*8, TP53 W146*; amplified drug targets: PIK3CA, SRC
+- RPMI7951: Melanoma; MSI: MSS; driver mutations: TP53 S166*, BRAF V600E, CDKN2A L16R; amplified drug targets: none
+- SKMEL30: Melanoma; MSI: MSS; driver mutations: TP53 T284fs*21, PTPRB R747Q, TP53 R273H, APC Q1406*, BRAF D287H, BRAF E275K, CDKN2A P114L; amplified drug targets: none
+- UWB1289+BRCA1: Ovarian Carcinoma; MSI: MSS; driver mutations: TP53 R209fs*6, NF1 (protein change not given); amplified drug targets: PIK3CA; BRCA1: unknown (engineered derivative)
+- ZR751: Breast Carcinoma; MSI: unknown; driver mutations: PTEN L108R; amplified drug targets: none
+
+## Mechanistic hypotheses
+[
+ {
+  "id": "H7",
+  "statement": "[example] A WEE1 inhibitor with gemcitabine hits p53-mutant lines.",
+  "drugs": [
+   "AZD1775",
+   "GEMCITABINE"
+  ],
+  "level": "mechanistic",
+  "predicted_responders": [
+   "A2058",
+   "ES2",
+   "SW-620"
+  ],
+  "responder_feature": "TP53 mutant",
+  "rationale": "",
+  "evidence_ids": [],
+  "status": "supported",
+  "n_tests": 4,
+  "score": 0.72
+ }
+]

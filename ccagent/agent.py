@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from ccagent import prompts, steps
-from ccagent.hypotheses import MAX_NEW, Hypothesis, HypothesisBook
+from ccagent.hypotheses import MAX_NEW, Hypothesis, HypothesisBook, max_responders
 from ccagent.literature import Literature, Paper
 from ccagent.llm.client import LLMClient
 from ccagent.masking import Masker
@@ -72,6 +72,7 @@ class AgentChooser:
     round: int = 0
     model: ResponseModel | None = None
     system: str | None = None
+    visible: set[str] = field(default_factory=set)  # cell lines a hypothesis may name
     evidence_round: dict = field(default_factory=dict)  # (drug_a, drug_b) -> last round shown
 
     def __post_init__(self):
@@ -89,7 +90,7 @@ class AgentChooser:
         cfg, m = self.config, self.masker
         self.round += 1
         if self.model is None:  # the first call's candidates hold every visible cell line
-            visible = set(candidates["cell_line"])
+            visible = self.visible = set(candidates["cell_line"])
             # same line order as ModelChooser, so the features (and BO's scores) are identical
             self.model = ResponseModel(candidates["cell_line"].unique(), tissue=self.tissue,
                                        with_genetics=cfg.with_genetics, seed=cfg.seed)
@@ -112,9 +113,10 @@ class AgentChooser:
         note = cfg.reading_note and bool(literature)
         prompt = prompts.hypothesize_prompt(
             short, past, DESCRIPTIONS[cfg.target], cfg.target, self.book.shown(short),
-            self.book.retired(), literature, m, MAX_NEW, reading_note=note)
+            self.book.retired(), literature, m, MAX_NEW, max_responders(len(self.visible)),
+            reading_note=note)
         proposals, record = steps.hypothesize(self.client, self.system, prompt, shown,
-                                              source_ids, m)
+                                              source_ids, m, lines=self.visible)
         self._record(record)
         new = self.book.add(proposals or [], self.round)
 
@@ -129,10 +131,13 @@ class AgentChooser:
                 verdicts, record = steps.critique(self.client, self.system, prompt, to_judge,
                                                   ids)
                 self._record(record)
-                self.book.apply_critique(verdicts or [], self.round)
+                if verdicts is None:  # failed twice: nothing was judged, so nothing passes
+                    self.book.uncritique(to_judge, self.round)
+                else:
+                    self.book.apply_critique(verdicts, self.round)
 
-        # 5. select
-        options = self.book.options(short, new)
+        # 5. select (with critique on, an uncritiqued hypothesis cannot be cited)
+        options = self.book.options(short, new, critiqued_only=cfg.ablation != "no_critique")
         prompt = prompts.select_prompt(short, past, cfg.target, options, k, m)
         picks, record = steps.select(self.client, self.system, prompt, short, options, k)
         self._record(record)
@@ -159,6 +164,7 @@ class AgentChooser:
         by_id = {h.id: h for h in hyps}
         return [{"hypothesis_id": p["hypothesis_id"], "drugs": by_id[p["hypothesis_id"]].drugs,
                  "statement": by_id[p["hypothesis_id"]].statement,
+                 "responder_feature": by_id[p["hypothesis_id"]].responder_feature,
                  "status": by_id[p["hypothesis_id"]].status,
                  "predicted_responders": sorted(p["predicted_responders"]),
                  "reason": p["reason"]} for p in items]
@@ -195,6 +201,7 @@ class AgentChooser:
                     self.literature.for_pair_by_class(a, b, n - len(together),
                                                       skip=[p.pmid for p in together])
         for papers in out.values():
+            prompts.check_papers(self.heldout, papers)  # redacted by Literature(hide_lines=...)
             for p in papers:
                 self.papers.setdefault(p.source_id, p)
         return out

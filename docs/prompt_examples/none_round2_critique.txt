@@ -1,0 +1,132 @@
+Challenge each hypothesis below against the literature and the results so far. Look for claims the cited sources do not support, results that contradict it, and mechanisms that do not apply to the predicted cell lines, including responders that lack the stated responder feature. Give exactly one verdict per hypothesis:
+{"verdicts": [{"id": "H1", "verdict": "keep" | "revise" | "drop", "revised_statement": "(only for revise)", "reason": "one sentence", "evidence_ids": []}]}
+
+## Hypotheses
+[
+ {
+  "id": "H2",
+  "statement": "BEZ-235 with CYCLOPHOSPHAMIDE resembles pairs that scored well.",
+  "drugs": [
+   "BEZ-235",
+   "CYCLOPHOSPHAMIDE"
+  ],
+  "level": "statistical",
+  "predicted_responders": [],
+  "responder_feature": "",
+  "rationale": "scripted",
+  "evidence_ids": [],
+  "status": "open",
+  "n_tests": 0,
+  "score": null
+ },
+ {
+  "id": "H1",
+  "statement": "BEZ-235 with GELDANAMYCIN resembles pairs that scored well.",
+  "drugs": [
+   "BEZ-235",
+   "GELDANAMYCIN"
+  ],
+  "level": "statistical",
+  "predicted_responders": [],
+  "responder_feature": "",
+  "rationale": "scripted",
+  "evidence_ids": [],
+  "status": "supported",
+  "n_tests": 11,
+  "score": 0.75
+ }
+]
+
+## Results so far
+20 experiments run so far.
+Highest joint:
+drug_a,drug_b,cell_line,synergy,inhibition,joint
+BEZ-235,GELDANAMYCIN,HT144,12.875,87.847,0.867
+BEZ-235,GELDANAMYCIN,LNCAP,8.923,79.038,0.572
+BEZ-235,GELDANAMYCIN,A2058,8.318,81.439,0.526
+BEZ-235,GELDANAMYCIN,OV90,7.074,80.846,0.433
+BEZ-235,GELDANAMYCIN,A375,6.927,67.49,0.239
+BEZ-235,GELDANAMYCIN,SW-620,4.057,85.97,0.208
+BEZ-235,GELDANAMYCIN,NCIH1650,3.135,67.502,0.139
+BEZ-235,GELDANAMYCIN,SW837,2.784,70.483,0.129
+
+Lowest joint:
+drug_a,drug_b,cell_line,synergy,inhibition,joint
+ERLOTINIB,MK-4827,T-47D,0.031,28.59,-1.225
+L778123,MK-4541,DLD1,4.156,25.163,-1.582
+ABT-888,MK-5108,SW837,0.993,6.219,-2.406
+CYCLOPHOSPHAMIDE,DINACICLIB,MDAMB436,-40.957,36.585,-3.664
+
+Tested pairs involving shortlisted drugs (pct_in_line: rank within the cell line, 1 = best):
+drug_a,drug_b,lines_tested,mean_pct_in_line,best_line
+5-FU,LAPATINIB,1,1.0,OVCAR3
+ABT-888,BEZ-235,1,1.0,T-47D
+BEZ-235,GELDANAMYCIN,11,1.0,HT144
+MK-4541,TOPOTECAN,1,1.0,CAOV3
+ABT-888,MK-5108,1,0.5,SW837
+CYCLOPHOSPHAMIDE,DINACICLIB,1,0.5,MDAMB436
+ERLOTINIB,MK-4827,1,0.5,T-47D
+L778123,MK-4541,1,0.5,DLD1
+MK-5108,MRK-003,1,0.5,OVCAR3
+
+
+## Literature
+How to read the literature: how much has been published about a drug reflects how much it has been studied, not how well it combines. Research compounds with few papers are as likely to score high in this screen as famous drugs. Papers describe other cells and conditions; when this lab's results disagree with a paper, go with the results. Class evidence is about other members of a drug's class, not the compound itself.
+
+### BEZ-235: mechanism
+
+[PMID:39992316] (2025) Carrier-Free Cisplatin-Dactolisib Nanoparticles for Enhanced Synergistic Antitumor Efficacy.
+...The synthesized CDDP-BEZ nanoparticles (NPs) possess sensitive pH-responsiveness, facilitating the delivery of both drugs to cancer cells. CDDP-BEZ NPs specifically enhanced cytotoxicity in cancer cells due to the synergy between cisplatin and dactolisib, resulting in augmented DNA damage, activation of mitochondria-dependent apoptosis, and increased inhibition on the PI3K/mTOR signaling axis. The inhibition of tumor migration and metastasis by CDDP-BEZ NPs was observed both in vitro and in vivo. Our data suggest that CDDP-BEZ NPs could serve as a safe and effective platform to maximize the synergy between both drugs in combating cancer, presenting a strategy to promote the therapeutic efficacy of platinum-based chemotherapeutic agents by combining them with PI3K inhibitors.
+
+[PMID:37677845] (2023) Synergistic effect of Dactolisib/Lys05 combination on autophagy in A549 cells.
+...This combinatorial effect was evaluated using various methodologies, such as expression profile analysis for autophagic, proliferative, and apoptotic markers. These effects were corroborated by ELISA, Western blot, and flow cytometry using the Annexin V-FITC apoptosis detection kit. A549 cells treated in a 2:1 ratio of Lys05 and Dactolisib demonstrated a synergistic effect on cell death, proliferation, and apoptotic gene markers, in addition to its effect on autophagic gene and protein markers, showing an enhanced effect compared to monotherapy. Therefore, the PI3K/AKT kinase inhibitor/autophagy inhibitor combination establishes higher therapeutic benefits on A549 cells compared to kinase inhibitor monotherapy.
+
+### CYCLOPHOSPHAMIDE: mechanism
+
+[PMID:19786984] (2009) Cyclophosphamide and cancer: golden anniversary.
+...It was initially synthesized to selectively target cancer cells, although the hypothesized mechanism of tumor specificity (activation by cancer cell phosphamidases) transpired to be irrelevant to its activity. Nevertheless, cyclophosphamide's unique metabolism and inactivation by aldehyde dehydrogenase is responsible for its distinct cytotoxic properties. Differential cellular expression of aldehyde dehydrogenase has an effect on the anticancer therapeutic index and immunosuppressive properties of cyclophosphamide. This Review highlights the chemistry, pharmacology, clinical toxic effects and current clinical applications of cyclophosphamide in cancer and autoimmune disorders. We also discuss the development of high-dose cyclophosphamide for BMT and the treatment of autoimmune diseases.
+
+[PMID:40414961] (2025) Efficacy, safety and exploratory analysis of neoadjuvant tislelizumab (a PD-1 inhibitor) plus nab-paclitaxel followed by epirubicin/cyclophosphamide for triple-negative breast cancer: a phase 2 TREND trial.
+...Pre-treatment model was identified and construct to predict response to immunotherapy. CDKN1A+ CD8 T lymphocytes were enriched in pCR group after neoadjuvant immunotherapy. Dynamic change of immune-related pathways at an early stage during the neoadjuvant immunotherapy may be associated with the treatment efficacy. In conclusion, neoadjuvant treatment of tislelizumab with nab-paclitaxel and anthracycline-based chemotherapy showed promising clinical activity and was well-tolerated among TNBC patients, without high incidence of TRAEs. These findings provide evidence supporting neoadjuvant tislelizumab with chemotherapy as an effective rational approach for treating TNBC.
+
+### BEZ-235 + CYCLOPHOSPHAMIDE: together
+
+[PMID:38662151] (2024) PUMC-MB1 is a novel group 3 medulloblastoma preclinical model, sensitive to PI3K/mTOR dual inhibitor.
+...Comparative analysis with D283 and D341med identified 4065 differentially expressed genes, with notable enrichment in the PI3K-AKT pathway. Cisplatin, 4-hydroperoxy cyclophosphamide/cyclophosphamide, vincristine, and dactolisib (a selective PI3K/mTOR dual inhibitor) significantly inhibited PUMC-MB1 proliferation in vitro and in vivo. PUMC-MB1, a novel Group 3 (Non-WNT/Non-SHH) MB cell line, is comprehensively characterized for its growth, pathology, and molecular characteristics. Notably, dactolisib demonstrated potent anti-proliferative effects with minimal toxicity, promising a potential therapeutic avenue. PUMC-MB1 could serve as a valuable tool for unraveling MB mechanisms and innovative treatment strategies.
+
+### BEZ-235 + CYCLOPHOSPHAMIDE: their drug classes together (not these exact compounds)
+
+[PMID:39979249] (2025) Olaparib combined to metronomic cyclophosphamide and metformin in women with recurrent advanced/metastatic endometrial cancer: the ENDOLA phase I/II trial.
+...The tolerability was acceptable, and grade 3-4 adverse events (51% patients) were mainly hematological. The NPR-10w was 61.5%, and the median progression-free survival (mPFS) was 5.2 months. In a post-hoc analysis, when explored by molecular subtypes/alterations, longer PFS were observed in patients with tumors characterized by a non-specific-molecular-profile (NSMP, n = 4; mPFS, 9.1 months), and by both TP53 altered & high number of large genomic alterations (LGA ≥ 8)(n = 10, mPFS, 8.6 months)). The analyses about kinetics of circulating biomarkers and pharmacodynamic effects are not reported here. In total, the benefit/toxicity ratio of the all-oral olaparib/cyclophosphamide/metformin regimen was favorable in heavily pretreated patients with recurrent endometrial cancer.
+
+### MK-2206: mechanism
+
+[PMID:35434236] (2022) A phase II study of MK-2206, an AKT inhibitor, in uterine serous carcinoma.
+...One confirmed partial response was observed in a patient who was also alive and progression-free at 6 months. One additional patient was alive and progression-free at 6 months. The clinical benefit rate was 14.3% (95% CI: 1.8 to 42.8). Five patients had stable disease (35.7%) and seven had progressive disease (50%); one was unevaluable. Median PFS was 2 months (95% CI: 1.6 to 4.4) and median overall survival was 6.4 months (95% CI: 5.1 to not reached). In summary, MK-2206 had limited activity in USC, although a few patients achieved sustained progression-free intervals in this study and in the previously reported phase II trial of MK-2206. Further investigations are needed to identify features associated with response.
+
+[PMID:32194695] (2020) Akt inhibitor MK-2206 reduces pancreatic cancer cell viability and increases the efficacy of gemcitabine.
+...The effects of MK-2206 alone or in combination with gemcitabine on pancreatic cell proliferation were assessed using the CCK-8 assay. Western blotting was used to examine the effects of the two drugs on Akt protein expression. The results demonstrated that MK-2206 inhibited the proliferation and induced apoptosis of the Mia PaCa-2 and Panc-1 pancreatic cancer cell lines. In addition, CCK-8 cytotoxicity test showed that combined administration of MK-2206 with gemcitabine enhanced the cytotoxic efficacy of gemcitabine. Furthermore, a low dose of MK-2206 (1 µM) combined with gemcitabine was enough to inhibit Akt phosphorylation. Taken together, these results provided some insight into the underlying mechanism of the anticancer effects of MK-2206 on pancreatic cancer cells.
+
+### BEZ-235 + MK-2206: together
+
+[PMID:37097377] (2023) Three generations of mTOR kinase inhibitors in the activation of the apoptosis process in melanoma cells.
+...mTOR inhibitors (Omipalisib, BEZ-235) in combination with the MAP kinase inhibitor (AS-703026) in the activation of caspase 3, induction of apoptosis, and inhibition of proliferation in melanoma cell lines. Our previous and current studies confirm the importance of the mTOR signal transduction pathway in the neoplastic transformation process. Melanoma is a case of a very heterogeneous neoplasm, which causes great difficulties in treating this neoplasm in an advanced stage, and the standard approach to this topic does not bring the expected results. There is a need for research on the search for new therapeutic strategies aimed at particular groups of patients. Effect of three generations of mTOR kinase inhibitors on caspase-3 activity, apoptosis and proliferation in melanoma cell lines.
+
+[PMID:25322685] (2015) Dual PI3K/mTOR inhibition shows antileukemic activity in MLL-rearranged acute myeloid leukemia.
+...By performing targeted amplicon sequencing in 38 MLL-AF9(+) and 125 cytogenetically normal AML patient samples, we found a high additional mutation rate for genes involved in growth factor signaling in 79% of all MLL-AF9(+) samples, which could lead to a possible benefit of this cohort. PI3K/mTOR inhibition for 24 h led to the cross-activation of the ERK pathway. Further in vitro studies combining PI3K/mTOR and ERK pathway inhibition revealed highly synergistic effects in apoptosis assays. Our data implicate a possible therapeutic benefit of PI3K/mTOR inhibition in the MLL-mutated subgroup. Inhibiting rescue pathways could improve the therapeutic efficacy of PI3K-targeted therapies in AML.
+
+### DASATINIB: mechanism
+
+[PMID:40712061] (2025) Dasatinib Remodels the Tumor Microenvironment and Sensitizes Small Cell Lung Cancer to Immunotherapy.
+...In immunotherapy-treated patients with SCLC, a gene signature including CD4, CIITA, and tumor mutational burden predicted good prognosis. On-treatment CCL5 plasma levels were increased only in patients with long progression-free survival, and pretreatment secretomics identified cytokines related to myeloid cells significantly associated with poor prognosis. In summary, combining Dasa with immunotherapy represents a strategy to treat SCLC, with CCL5 as a cytokine that could serve to monitor response. Multikinase inhibitor and immune checkpoint blockade combination therapy overcomes the immunosuppressive tumor microenvironment in small cell lung cancer by activating CCL5 and costimulating CD4+ T cells, NK cells, and MHC-II+ cells.
+
+[PMID:37152411] (2023) Dasatinib targets c-Src kinase in cardiotoxicity.
+...Exposure of cardiomyocytes to dasatinib attenuated the activity of extracellular signal-regulated kinase (ERK), which is a downstream target of dasatinib target kinase c-Src. Similar to dasatinib, c-Src depletion in cardiomyocytes compromised cardiomyocyte viability. Overexpression of dasatinib-resistant mutant of c-Src rescued the toxicity of dasatinib on cardiomyocytes, whereas forced expression of wild type c-Src did not have protective effect. Collectively, our results show that c-Src is a key target of dasatinib mediating the toxicity of dasatinib to cardiomyocytes. These findings may influence future drug design and suggest closer monitoring of patients treated with agents targeting c-Src for possible adverse cardiac effects.
+
+### BEZ-235 + DASATINIB: together
+
+[PMID:30762245] (2019) Topical kinase inhibitors induce regression of cutaneous squamous cell carcinoma.
+...We hypothesized that topical small molecule inhibitors targeting kinases promoting keratinocyte growth in AKs and SCCIS could induce regression of these lesions with less inflammation. To test this hypothesis, we determined the efficacy of topical dasatinib, 5-fluorouracil and BEZ-235 in inducing regression of cSCCs in the K14-Fyn Y528 transgenic mouse model. Topical dasatinib induced regression of cSCC with less inflammation, no ulceration and no mortality compared to 5-fluorouracil. Topical BEZ-235 induced cSCC regression similar to dasatinib without erythema or ulceration. These data indicate that topical small molecule kinase inhibitors targeting drivers of AK/SCCIS/cSCC growth represent a promising therapeutic approach to treat these common skin lesions.
+
+[PMID:32230980] (2020) Differential Targeting of Gr-MDSCs, T Cells and Prostate Cancer Cells by Dactolisib and Dasatinib.
+...We found cell type-specific protein expression patterns and highly selective targets by the two drugs, including preferential inhibition of phospho-4E-BP1 in Gr-MDSCs by Dactolisib and preferential suppression of phospho-Src and phospho-p38 MAPK in T cells. Furthermore, transcriptomic profiling of Gr-MDSCs treated with the two inhibitors revealed downregulation of mitochondrial respiration pathways by Dactolisib but not Dasatinib. Overall, these results provide important mechanistic insight into the efficacious combination of Dactolisib and ICB as well as the detrimental effect of Dasatinib on anti-tumor immunity.

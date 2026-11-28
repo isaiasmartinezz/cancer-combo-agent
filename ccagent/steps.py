@@ -2,7 +2,8 @@
 call, check the answer, retry once.
 
 The model must answer in JSON. Code then checks what a format cannot: cited IDs were actually
-shown, drugs and cell lines are on the shortlist, mechanistic hypotheses name responder lines,
+shown, drugs are on the shortlist, mechanistic hypotheses name a responder feature and at most
+half the visible lines as responders (never a held-out line),
 critique gives one verdict per hypothesis, and select returns exactly k distinct shortlist IDs.
 A failed answer gets one retry with its problems listed. If that fails too, hypothesize and
 critique contribute nothing this round, and select falls back to the shortlist's first k rows,
@@ -16,7 +17,7 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from ccagent.hypotheses import LEVELS, MAX_NEW, Hypothesis, HypothesisBook
+from ccagent.hypotheses import LEVELS, MAX_NEW, Hypothesis, HypothesisBook, max_responders
 from ccagent.llm.client import LLMClient, LLMResponse
 from ccagent.masking import Masker
 
@@ -34,7 +35,8 @@ _STR, _STRS = {"type": "string"}, {"type": "array", "items": {"type": "string"}}
 SCHEMAS = {
     "hypothesize": _obj({"hypotheses": {"type": "array", "items": _obj({
         "statement": _STR, "drugs": _STRS, "level": {"type": "string", "enum": list(LEVELS)},
-        "predicted_responders": _STRS, "rationale": _STR, "evidence_ids": _STRS})}}),
+        "predicted_responders": _STRS, "responder_feature": _STR, "rationale": _STR,
+        "evidence_ids": _STRS})}}),
     "critique": _obj({"verdicts": {"type": "array", "items": _obj({
         "id": _STR, "verdict": {"type": "string", "enum": list(VERDICTS)},
         "revised_statement": _STR, "reason": _STR, "evidence_ids": _STRS})}}),
@@ -100,11 +102,12 @@ def run_step(client: LLMClient, system: str, prompt: str, step: str, key: str,
 # ---------- the steps ----------
 
 def hypothesize(client, system, prompt, shown_shortlist: pd.DataFrame, source_ids: set[str],
-                masker: Masker, max_new: int = MAX_NEW):
+                masker: Masker, *, lines: set[str], max_new: int = MAX_NEW):
+    """lines: the visible cell lines, any of which may be a predicted responder."""
     drugs = set(shown_shortlist["drug_a"]) | set(shown_shortlist["drug_b"])
-    lines = set(shown_shortlist["cell_line"])
+    cap = max_responders(len(lines))
     fields = {"statement": str, "drugs": list, "level": str, "predicted_responders": list,
-              "rationale": str, "evidence_ids": list}
+              "responder_feature": str, "rationale": str, "evidence_ids": list}
 
     def check(items):
         problems = [] if 1 <= len(items) <= max_new else \
@@ -121,9 +124,15 @@ def hypothesize(client, system, prompt, shown_shortlist: pd.DataFrame, source_id
             if bad := set(h["drugs"]) - drugs:
                 problems.append(f"{label}: drugs not on the shortlist: {sorted(bad)}")
             if bad := set(h["predicted_responders"]) - lines:
-                problems.append(f"{label}: cell lines not on the shortlist: {sorted(bad)}")
+                problems.append(f"{label}: not among the listed cell lines: {sorted(bad)}")
+            if len(set(h["predicted_responders"])) > cap:
+                problems.append(f"{label}: name at most {cap} responder lines, the ones with "
+                                "the responder feature")
             if h["level"] == "mechanistic" and not h["predicted_responders"]:
                 problems.append(f"{label}: a mechanistic hypothesis must name responder lines")
+            if h["level"] == "mechanistic" and not h["responder_feature"].strip():
+                problems.append(f"{label}: a mechanistic hypothesis must name the "
+                                "responder_feature its responder lines share")
             if bad := set(h["evidence_ids"]) - source_ids:
                 problems.append(f"{label}: cites sources that were not shown: {sorted(bad)}")
         return problems
@@ -192,7 +201,7 @@ def select(client, system, prompt, shortlist: pd.DataFrame, options: list[Hypoth
 def predict_heldout(client, system, prompt, hypotheses: list[Hypothesis], lines: set[str]):
     """One prediction per hypothesis, naming only held-out lines. None after two failures (the
     run then has no held-out test; its picks are unaffected)."""
-    want = sorted(h.id for h in hypotheses)
+    want, cap = sorted(h.id for h in hypotheses), max_responders(len(lines))
 
     def check(items):
         problems = []
@@ -206,6 +215,9 @@ def predict_heldout(client, system, prompt, hypotheses: list[Hypothesis], lines:
                 continue
             if bad := set(p["predicted_responders"]) - lines:
                 problems.append(f"{label}: not among the untested lines: {sorted(bad)}")
+            if len(set(p["predicted_responders"])) > cap:
+                problems.append(f"{label}: name at most {cap} lines, the ones with the "
+                                "responder feature")
         return problems
 
     return run_step(client, system, prompt, "predict_heldout", "predictions", check)
@@ -226,7 +238,8 @@ def explain(pick: dict, book: HypothesisBook, shortlist: pd.DataFrame) -> dict:
             text += " | (downgraded: the cited hypothesis does not cover this drug pair)"
             level = "statistical"
         elif level == "mechanistic" and h.predicted_responders:
-            text += f" | Predicted responders: {', '.join(h.predicted_responders)}"
+            text += (f" | Predicted responders ({h.responder_feature}): "
+                     f"{', '.join(h.predicted_responders)}")
         elif level == "mechanistic":
             level = "statistical"
             text += " | (downgraded from mechanistic: no predicted responder lines)"

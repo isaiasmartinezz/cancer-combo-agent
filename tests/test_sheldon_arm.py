@@ -14,9 +14,10 @@ from ccagent.literature import Exclusions, Literature, PubMed  # noqa: E402
 from ccagent.llm.guard import LLMNotAllowed  # noqa: E402
 from ccagent.llm.sheldon_client import EFFORT, MODEL, SheldonLLM, make_llm  # noqa: E402
 from ccagent.loop import run_selection  # noqa: E402
+from ccagent.prompts import LeakError  # noqa: E402
 from ccagent.sheldon_arm import OneilCombo, scripted_bo_responder  # noqa: E402
 from scripts.run_sheldon import build_config  # noqa: E402
-from tests.test_agent import HELD, HashModel, fake_fetch, table  # noqa: E402
+from tests.test_agent import HELD, HashModel, fake_fetch, fetch_naming_heldout, table  # noqa: E402,E501
 
 BUDGET = 60
 
@@ -115,12 +116,33 @@ def test_heldout_lines_cannot_be_run_or_seen():
         assert "strong_" not in text and "cutoff" not in text.lower()
 
 
+@pytest.mark.parametrize("hide", [True, False])
+def test_literature_tools_redact_heldout_lines_or_refuse(synthetic, monkeypatch, tmp_path, hide):
+    drugs = sorted(set(table()["drug_a"]) | set(table()["drug_b"]))
+    lit = Literature(PubMed(tmp_path / "naming", fetch=fetch_naming_heldout, allow_network=True),
+                     Exclusions.parse(""), {d: [d] for d in drugs},
+                     hide_lines=[HELD] if hide else ())
+    monkeypatch.setattr(synthetic, "literature", lit)
+    _, _, probes = bench()
+    for name, args in (("drug_literature", {"drug": "D1"}),
+                       ("pair_literature", {"drug_a": "D1", "drug_b": "D2"})):
+        if hide:
+            text = call(probes, name, **args).summary
+            assert HELD not in text and "[another cell line]" in text
+        else:
+            with pytest.raises(LeakError):
+                call(probes, name, **args)
+
+
 def test_literature_tools_only_when_enabled():
     _, _, with_lit = bench()
     _, task, without = bench(literature=False)
     assert {"drug_literature", "pair_literature"} <= set(with_lit)
     assert not {"drug_literature", "pair_literature"} & set(without)
-    assert "[PMID:" in call(with_lit, "drug_literature", drug="D1").summary
+    for name, args in (("drug_literature", {"drug": "D1"}),
+                       ("pair_literature", {"drug_a": "D1", "drug_b": "D2"})):
+        text = call(with_lit, name, **args).summary
+        assert "[PMID:" in text and text.startswith("How to read the literature")
     assert "literature" not in task.question
 
 
