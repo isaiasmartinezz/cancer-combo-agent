@@ -60,7 +60,7 @@ def test_unknown_mode_rejected():
 
 
 def test_importing_the_package_loads_no_provider_sdk():
-    assert "anthropic" not in sys.modules
+    assert "anthropic" not in sys.modules and "google.genai" not in sys.modules
     assert "openai" not in sys.modules
 
 

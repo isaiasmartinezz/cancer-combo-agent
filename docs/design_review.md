@@ -214,7 +214,7 @@ famous-drug share; masking hides names, not identity (class and targets stay vis
 | Task text | Lab description, goal ("as many strong as you can within 250"), how the tools work, drug and line lists, the shared first batch | [confirm] |
 | Tools | get_shortlist, run_experiments (≤10, latest shortlist only), results_so_far, drug_info, cell_line_info, drug_literature, pair_literature | [fixed]: same information as the agent |
 | Removed | SHELDON's web search, web fetch, shell | [fixed]: would reach unfiltered papers |
-| Model | Same model and effort as the agent (fixed via a subclass; SHELDON's code unedited) | [fixed] |
+| Model | Same model and thinking level as the agent, via SHELDON's OpenAI-compatible backend pointed at Gemini, with reasoning_effort added (SHELDON's code unedited) | [fixed] |
 | Stopping | Budget spent, 40-round cap, or per-seed dollar cap | [fixed] |
 | Literature excerpts | Same formatting as the agent (so section 1.1 applies here too) | follows 1.1 |
 
@@ -222,7 +222,9 @@ famous-drug share; masking hides names, not identity (class and targets stay vis
 
 | Item | Choice | Status |
 |---|---|---|
-| Model | Claude Sonnet 5.5, adaptive thinking, effort medium; same for every arm and SHELDON | [fixed] |
+| Model | Gemini 4 Argon, thinking level medium, Gemini Interactions API (google-genai 3.3.0); same for every arm and SHELDON | [decided Nov 27; replaced Sonnet 5.5] |
+| Price | $2 / $10 per million input / output tokens until Nov 30, then doubled: every paid run must finish by Nov 30 | [plan] |
+| Refusals | No server-side fallback on Gemini: a blocked or unfinished answer counts as a failed answer (retry, then BO's batch for select) and is reported | [fixed] |
 | Gate | Real calls need `--allow-llm` and `LLM_API_KEY` | [fixed] |
 | Spend cap | $30 per key, each with its own spend log (`--key 1`: LLM_API_KEY, runs/llm_spend.jsonl; `--key 2`: LLM_API_KEY_2, runs/llm_spend_key2.jsonl), checked before every call; a seed is skipped if a whole seed won't fit | [built Nov 27] |
 | Finished seeds | Skipped by both run scripts (never paid for twice); the run log is written last, so a crashed seed is rerun; `--overwrite` forces a rerun | [built Nov 27] |

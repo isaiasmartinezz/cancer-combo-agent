@@ -175,11 +175,26 @@ def test_config_offers_only_the_benchmarks_tools(tmp_path):
 
 # ---------- the model client ----------
 
-def test_requests_carry_adaptive_thinking_and_our_effort():
-    llm = SheldonLLM(model=MODEL, effort=EFFORT)
-    req = llm._request("hi", "sys", MODEL, EFFORT, 1000, True, True)
-    assert req["thinking"] == {"type": "adaptive"}
-    assert req["output_config"] == {"effort": EFFORT}
+def test_requests_go_to_gemini_with_our_thinking_level():
+    from types import SimpleNamespace
+
+    from ccagent.llm.sheldon_client import BASE_URL, _Backend
+
+    backend = _Backend("k")
+    assert str(backend.client.base_url).rstrip("/") == BASE_URL.rstrip("/")
+    req = SheldonLLM(model=MODEL, effort=EFFORT)._request("hi", "sys", MODEL, EFFORT, 1000,
+                                                          True, True)
+    params = backend._params(req, None)
+    assert params["model"] == MODEL and params["reasoning_effort"] == EFFORT == "medium"
+    assert params["messages"][0] == {"role": "system", "content": "sys"}
+
+    def resp(total):
+        usage = SimpleNamespace(prompt_tokens=100, completion_tokens=50, total_tokens=total,
+                                prompt_tokens_details=None,
+                                completion_tokens_details=SimpleNamespace(reasoning_tokens=30))
+        return SimpleNamespace(usage=usage, model=MODEL)
+    assert backend._usage(resp(180)).output_tokens == 80  # reasoning reported apart: added
+    assert backend._usage(resp(150)).output_tokens == 50  # already inside completion_tokens
 
 
 def test_real_sheldon_client_is_gated():
@@ -193,4 +208,6 @@ def test_sheldon_prices_our_model_at_list_price():
     import sheldon.core.llm as sllm
 
     make_llm("fake")
-    assert sllm.PRICING[MODEL] == pytest.approx((2.0, 10.0))
+    from ccagent.llm.real import rates
+
+    assert sllm.PRICING[MODEL] == pytest.approx(tuple(r * 1e6 for r in rates(MODEL)))

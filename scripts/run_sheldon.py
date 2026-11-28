@@ -23,8 +23,8 @@ from pathlib import Path
 
 from ccagent.llm import settings
 from ccagent.llm.guard import add_llm_args, spend_log
-from ccagent.llm.real import SpendLedger
-from ccagent.llm.sheldon_client import EFFORT, MODEL, make_llm
+from ccagent.llm.real import SpendLedger, rates
+from ccagent.llm.sheldon_client import BASE_URL, EFFORT, MODEL, PROVIDER, make_llm
 from ccagent.sheldon_arm import NAME, scripted_bo_responder
 
 OUT = Path("runs/sheldon")
@@ -38,7 +38,7 @@ def build_config(seed: int, max_usd: float, rounds: int, literature: bool, out: 
 
     cfg = Config(
         benchmark=NAME, method="sheldon", split="eval", seed=seed, engine="toolloop",
-        provider="anthropic", model=MODEL, effort=EFFORT, thinking=True,
+        provider=PROVIDER, base_url=BASE_URL, model=MODEL, effort=EFFORT, thinking=True,
         max_tokens=settings.MAX_TOKENS, max_rounds=rounds, max_calls=None, max_usd=max_usd,
         concurrency=1, cache=True, resume=False, tag=f"seed{seed}",
         params={"probes": [], "mode": "staged", "rounds": rounds,
@@ -50,11 +50,12 @@ def build_config(seed: int, max_usd: float, rounds: int, literature: bool, out: 
 
 
 def usd(usage: dict) -> float:
-    """What the run cost at our list prices (SHELDON's own estimate rounds cache reads up)."""
-    inp, out, read, write = settings.PRICES[MODEL]
-    return (usage.get("input_tokens", 0) * inp + usage.get("output_tokens", 0) * out
-            + usage.get("cache_read_tokens", 0) * read
-            + usage.get("cache_write_tokens", 0) * write)
+    """What the run cost at our list prices, never undercounted: cached input is charged at the
+    full input rate, as for the agent (ccagent/llm/real.py)."""
+    inp, out = rates(MODEL)
+    prompt = sum(usage.get(k, 0) or 0 for k in
+                 ("input_tokens", "cache_read_tokens", "cache_write_tokens"))
+    return prompt * inp + (usage.get("output_tokens", 0) or 0) * out
 
 
 def main() -> None:

@@ -7,7 +7,7 @@ rdkit==2026.9.1
 matplotlib
 requests
 python-dotenv
-anthropic==2.14.0  # only used by real agent runs (behind --allow-llm); tests never load it
+google-genai==3.3.0  # only used by real runs (behind --allow-llm); tests never load it
 pytest
 ruff
 # SHELDON arm (scripts/run_sheldon.py), pinned to the release used; its tests skip without it
