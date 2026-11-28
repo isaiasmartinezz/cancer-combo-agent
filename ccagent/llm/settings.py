@@ -6,7 +6,9 @@ runs. If it is ever changed, every earlier agent result must be rerun (see docs/
 AGENT_MODEL: str | None = "claude-sonnet-5-5"
 AGENT_EFFORT = "medium"
 MAX_TOKENS = 16000
-BUDGET_USD = 30.0  # hard cap per key on the summed cost of its real calls, across all runs
+# Hard cap per key on the summed cost of its real calls, across all runs. Each key holds $50;
+# $48 leaves room for billing rounding and an estimate that runs high (decision log, Nov 27).
+BUDGET_USD = 48.0
 
 # One environment variable, spend log and $BUDGET_USD cap per API key (decision log, Nov 27).
 # Key 1 is the original; key 2 keeps its own log, so each key's cap is checked separately.

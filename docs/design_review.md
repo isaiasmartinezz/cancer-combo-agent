@@ -233,7 +233,9 @@ famous-drug share; masking hides names, not identity (class and targets stay vis
 ## 10. Evaluation and analyses (to build, offline)
 
 **Primary (named Nov 27, before any real run):** agent vs BO and agent vs no-literature, strong
-finds (joint_within_line), per-seed paired differences over seeds 0–4 with their range.
+finds (joint_within_line), per-seed paired differences over **seeds 0–9** with their range
+(extended from 0–4 when a second $50 key became available). Seeds are dropped only for cost,
+never on results; the report states how many ran.
 
 | Analysis | What it shows |
 |---|---|
@@ -253,9 +255,11 @@ finds (joint_within_line), per-seed paired differences over seeds 0–4 with the
 | Cost | Dollars and tokens per seed per arm |
 
 ## 11. Limitations to state in the report
-- Only 5 seeds per main arm, 3 for masked names, 2 for SHELDON; five seeds detect only
-  differences of roughly 20–25 strong finds, so process measures carry much of the argument.
-- Much of the gain over random comes from the shortlist (random-from-shortlist ≈ BO).
+- 10 seeds for the two primary arms, 5 for the ablations, 2 for SHELDON; ten seeds detect
+  differences of roughly 14–17 strong finds (five, roughly 20–25), so process measures carry
+  much of the argument.
+- Much of the gain over random comes from the shortlist: random-from-shortlist finds 39.6 ±
+  12.0 against BO's 47.3 ± 10.5 over seeds 0–9 (on seeds 0–4 alone they looked equal).
 - One screen, one model, one prompt design; a simulation is not a real lab.
 - Literature v3 was designed after seeing the seed-0 pilot logs; seed 0 is also a test seed.
 - No date cutoff on literature: the risk it would address is papers on held-out lines, and
