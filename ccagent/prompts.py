@@ -7,6 +7,8 @@ Leakage rules, each enforced here and locked by a test:
 - No held-out cell line may appear in the shortlist, the results, or the reference block.
   `check_inputs` refuses to build a prompt otherwise. (A held-out line can still be named inside a
   retrieved abstract; that is published literature, not a result.)
+- Held-out lines appear in exactly one prompt: the prediction made after the run is over
+  (`heldout_prompt`), which shows their names and genetics, never a result.
 - Every drug name passes through the masker, which is the identity unless the masked-name
   ablation is on.
 """
@@ -68,6 +70,25 @@ hypotheses apart; a few "explore" picks for untested drug classes are fine. Each
 hypothesis it tests (or "explore"), an explanation level, and a one-sentence reason:
 {{"picks": [{{"exp_id": "E00001", "hypothesis_id": "H1" | "explore", "level": "mechanistic" | \
 "cross_cancer" | "statistical", "reason": "..."}}]}}"""
+
+
+PREDICT_HELDOUT = """The run is over and no more experiments will be chosen. Below are cell \
+lines this run never tested, with their genetics only (no results exist for you), and your \
+mechanistic hypotheses. For each hypothesis, name the untested lines whose genetics mean the \
+mechanism should make the pair score high on the target: {target}. Use only the mechanism and \
+each line's genetics and tissue; an empty list is right when no line fits. One prediction per \
+hypothesis:
+{{"predictions": [{{"hypothesis_id": "H1", "predicted_responders": ["LINE"], "reason": \
+"one sentence"}}]}}"""
+
+
+# Shown with the literature only (the no-literature arm's prompts are unchanged). In iteration 1,
+# hypotheses with literature named famous drugs 63% of the time, against 36% without it.
+READING_NOTE = """How to read the literature: how much has been published about a drug \
+reflects how much it has been studied, not how well it combines. Research compounds with few \
+papers are as likely to score high in this screen as famous drugs. Papers describe other cells \
+and conditions; when this lab's results disagree with a paper, go with the results. Class \
+evidence is about other members of a drug's class, not the compound itself."""
 
 
 # ---------- leakage check ----------
@@ -160,24 +181,31 @@ def fmt_literature(sections: dict[str, list[Paper]], masker: Masker) -> str:
 
 # ---------- the three task prompts ----------
 
+def _literature_section(literature, masker, reading_note: bool) -> str:
+    body = fmt_literature(literature, masker)
+    return f"## Literature\n{READING_NOTE}\n\n{body}" if reading_note \
+        else f"## Literature\n{body}"
+
+
 def hypothesize_prompt(shortlist, history, target_text, target, shown, retired, literature,
-                       masker, max_new) -> str:
+                       masker, max_new, reading_note: bool = False) -> str:
     parts = [HYPOTHESIZE.format(max_new=max_new, target=target_text),
              f"## Shortlist\n{fmt_shortlist(shortlist, masker)}",
              f"## Results so far\n{fmt_results(history, shortlist, target, masker)}",
              f"## Existing hypotheses\n{fmt_hypotheses(shown, masker)}"]
     if retired:
         parts.append("## Retired ideas (do not repeat)\n" + masker.text("\n".join(retired)))
-    parts.append(f"## Literature\n{fmt_literature(literature, masker)}")
+    parts.append(_literature_section(literature, masker, reading_note))
     return "\n\n".join(parts)
 
 
-def critique_prompt(to_judge, history, shortlist, target, literature, masker) -> str:
+def critique_prompt(to_judge, history, shortlist, target, literature, masker,
+                    reading_note: bool = False) -> str:
     return "\n\n".join([
         CRITIQUE,
         f"## Hypotheses\n{fmt_hypotheses(to_judge, masker)}",
         f"## Results so far\n{fmt_results(history, shortlist, target, masker)}",
-        f"## Literature\n{fmt_literature(literature, masker)}",
+        _literature_section(literature, masker, reading_note),
     ])
 
 
@@ -187,4 +215,14 @@ def select_prompt(shortlist, history, target, options, k, masker) -> str:
         f"## Shortlist\n{fmt_shortlist(shortlist, masker)}",
         f"## Hypotheses\n{fmt_hypotheses(options, masker)}",
         f"## Results so far\n{fmt_results(history, shortlist, target, masker)}",
+    ])
+
+
+def heldout_prompt(hypotheses, heldout_summaries: dict[str, str], target_text, masker) -> str:
+    """The one prompt that names held-out lines: genetics only, after every pick is made."""
+    lines = "\n".join(f"- {line}: {heldout_summaries[line]}" for line in sorted(heldout_summaries))
+    return "\n\n".join([
+        PREDICT_HELDOUT.format(target=target_text),
+        f"## Untested cell lines (genetics only)\n{lines}",
+        f"## Mechanistic hypotheses\n{fmt_hypotheses(hypotheses, masker)}",
     ])

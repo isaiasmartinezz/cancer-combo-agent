@@ -4,9 +4,15 @@ Two layers, kept apart so each can be tested on its own:
   PubMed      raw search results, cached on disk. Agent runs read the cache only; the network is
               used only when a caller passes allow_network=True (the prefetch script), so a run
               always sees the same papers and cannot reach the internet mid-run.
-  Literature  what the agent is allowed to see: papers with an abstract, one per title, and none
-              matching the exclusion list. The filter runs on every read, so editing the list
-              takes effect without re-downloading anything.
+  Literature  what the agent is allowed to see: papers with an abstract, one per title, none
+              matching the exclusion list, and none whose title marks it as carrying no
+              mechanism (approval notices, pharmacokinetics, formulations, errata). The filter
+              runs on every read, so editing it takes effect without re-downloading anything.
+
+Combination papers exist mostly for well-studied drugs (in iteration 1, 2.0 per famous pair and
+0.25 per pair of research compounds), so when a pair has too few papers naming both drugs, the
+rest is filled with papers on the two drug *classes* used together (for_pair_by_class), from
+the class terms in data/reference/drug_class_terms.csv, and labelled as class evidence.
 """
 import hashlib
 import json
@@ -18,6 +24,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 EXCLUSIONS = Path("data/reference/excluded_sources.txt")
+CLASS_TERMS = Path("data/reference/drug_class_terms.csv")
 CACHE_DIR = Path("data/cache/pubmed")
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 OVERFETCH = 10  # extra results per search so filtering does not leave the agent short
@@ -170,13 +177,38 @@ def drug_term(names: Iterable[str], field: str = "tiab") -> str:
 
 
 MECHANISM = '(mechanism[tiab] OR "mode of action"[tiab] OR inhibitor[tiab] OR target[tiab])'
+COMBINATION = "(synerg*[tiab] OR combination[tiab] OR combined[tiab])"
+# Titles of papers that describe a drug without saying how it acts on cells (not leakage, so
+# kept apart from the exclusion list). In iteration 1, 53 of 288 mechanism papers were these.
+LOW_INFORMATION = re.compile(
+    r"first (global )?approval|approval summary|pharmacokinetic|bioequivalen|formulation|"
+    r"erratum|corrigendum|retraction|retracted", re.IGNORECASE)
+
+
+def class_term(phrases: Iterable[str]) -> str:
+    """PubMed clause for a drug class, singular or plural: ("PARP inhibitor"[tiab] OR ...)."""
+    terms = []
+    for p in phrases:
+        terms += [f'"{p}"[tiab]', f'"{p}s"[tiab]']
+    return "(" + " OR ".join(terms) + ")"
+
+
+def class_terms(path: Path = CLASS_TERMS) -> dict[str, list[str]]:
+    import pandas as pd
+
+    table = pd.read_csv(path, dtype=str).fillna("")
+    return {r.drug_id: [t for t in r.class_terms.split("|") if t] for r in table.itertuples()}
 
 
 class Literature:
-    def __init__(self, pubmed: PubMed, exclusions: Exclusions, names: dict[str, list[str]]):
-        """names: drug_id -> every name to search it by (the dataset ID and the generic name)."""
+    def __init__(self, pubmed: PubMed, exclusions: Exclusions, names: dict[str, list[str]],
+                 classes: dict[str, list[str]] | None = None):
+        """names: drug_id -> every name to search it by (the dataset ID and the generic name).
+        classes: drug_id -> class phrases (class_terms()); None turns class evidence off."""
         self.pubmed, self.exclusions, self.names = pubmed, exclusions, names
+        self.classes = classes or {}
         self.excluded_log: list[tuple[str, str]] = []  # (source_id, reason), for the run audit
+        self.low_information_log: list[str] = []
 
     def search(self, query: str, n: int) -> list[Paper]:
         kept, titles = [], set()
@@ -188,6 +220,9 @@ class Literature:
             # No abstract: nothing to reason from. Repeated title: another edition of a review.
             key = _title_key(paper.title)
             if not paper.abstract or key in titles:
+                continue
+            if LOW_INFORMATION.search(paper.title):
+                self.low_information_log.append(paper.source_id)
                 continue
             kept.append(paper)
             titles.add(key)
@@ -209,6 +244,26 @@ class Literature:
     def for_pair(self, drug_a: str, drug_b: str, n: int) -> list[Paper]:
         """Papers naming both drugs."""
         return self.search(f"{self._term(drug_a)} AND {self._term(drug_b)}", n)
+
+    def _either(self, drug: str) -> str:
+        """The drug by name, or anything in its class."""
+        phrases = self.classes.get(drug)
+        return f"({self._term(drug)} OR {class_term(phrases)})" if phrases else self._term(drug)
+
+    def has_class(self, drug: str) -> bool:
+        return bool(self.classes.get(drug))
+
+    def for_pair_by_class(self, drug_a: str, drug_b: str, n: int,
+                          skip: Iterable[str] = ()) -> list[Paper]:
+        """Papers on the two drugs' classes used together (e.g. a CHK1 inhibitor with
+        gemcitabine), for pairs the literature names too rarely. Empty unless at least one drug
+        has class terms, since the query would then only repeat for_pair."""
+        if not (self.has_class(drug_a) or self.has_class(drug_b)):
+            return []
+        skip = set(skip)
+        query = f"{self._either(drug_a)} AND {self._either(drug_b)} AND {COMBINATION} AND " \
+                "cancer[tiab]"
+        return [p for p in self.search(query, n + len(skip)) if p.pmid not in skip][:n]
 
 
 def drug_names(drugs_csv: Path = Path("data/reference/drugs.csv")) -> dict[str, list[str]]:

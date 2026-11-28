@@ -1,0 +1,39 @@
+drug_id,class_terms,derived_from
+5-FU,thymidylate synthase inhibitor|pyrimidine analogue,drug_class
+ABT-888,PARP inhibitor,drug_class
+AZD1775,WEE1 inhibitor|WEE1 kinase inhibitor,drug_class (with and without "kinase")
+BEZ-235,PI3K inhibitor|mTOR inhibitor|PI3K/mTOR inhibitor,drug_class (dual PI3K / mTOR inhibitor)
+BORTEZOMIB,proteasome inhibitor,drug_class
+CARBOPLATIN,platinum,drug_class (platinum compound)
+CYCLOPHOSPHAMIDE,alkylating agent|nitrogen mustard,drug_class
+DASATINIB,SRC inhibitor|BCR-ABL inhibitor,drug_class (first two listed targets)
+DEXAMETHASONE,glucocorticoid,drug_class
+DINACICLIB,CDK inhibitor,drug_class
+DOXORUBICIN,anthracycline|topoisomerase II inhibitor,drug_class
+ERLOTINIB,EGFR inhibitor|EGFR tyrosine kinase inhibitor,drug_class (with and without "tyrosine kinase")
+ETOPOSIDE,topoisomerase II inhibitor,drug_class
+GELDANAMYCIN,HSP90 inhibitor,drug_class
+GEMCITABINE,ribonucleotide reductase inhibitor|pyrimidine analogue,drug_class
+L778123,farnesyltransferase inhibitor,drug_class
+LAPATINIB,HER2 inhibitor|EGFR inhibitor,drug_class (HER2 and EGFR tyrosine kinase inhibitor)
+METFORMIN,biguanide|complex I inhibitor,drug_class
+METHOTREXATE,DHFR inhibitor|folic acid analogue,drug_class
+MITOMYCINE,,drug_class too general (cytotoxic antibiotic; acts on DNA): name only
+MK-2206,AKT inhibitor,drug_class
+MK-4541,selective androgen receptor modulator,drug_class
+MK-4827,PARP inhibitor,drug_class
+MK-5108,Aurora A inhibitor|Aurora A kinase inhibitor,drug_class (with and without "kinase")
+MK-8669,mTOR inhibitor,drug_class
+MK-8776,CHK1 inhibitor,drug_class
+MRK-003,gamma-secretase inhibitor|Notch inhibitor,drug_class (blocks Notch signaling)
+OXALIPLATIN,platinum,drug_class (platinum compound)
+PACLITAXEL,taxane,drug_class (taxane only: 'tubulin inhibitor' would also match the vinca alkaloids)
+PD325901,MEK inhibitor,drug_class (MEK1/2 inhibitor)
+SN-38,topoisomerase I inhibitor,drug_class
+SORAFENIB,RAF inhibitor|VEGFR inhibitor,drug_class (first two listed targets)
+SUNITINIB,VEGFR inhibitor|PDGFR inhibitor,drug_class (first two listed targets)
+TEMOZOLOMIDE,alkylating agent,drug_class
+TOPOTECAN,topoisomerase I inhibitor,drug_class
+VINBLASTINE,vinca alkaloid,drug_class
+VINORELBINE,vinca alkaloid,drug_class
+ZOLINZA,HDAC inhibitor,drug_class

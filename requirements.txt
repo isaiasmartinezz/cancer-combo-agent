@@ -10,3 +10,10 @@ python-dotenv
 anthropic==2.14.0  # only used by real agent runs (behind --allow-llm); tests never load it
 pytest
 ruff
+# SHELDON arm (scripts/run_sheldon.py), pinned to the release used; its tests skip without it
+sheldon @ git+https://github.com/stanford-oval/sheldon@7fbf027d1fb414443612d4ad2661b396c8352cd3
+jinja2==3.1.6
+openai==3.60.0
+pydantic==2.14.4
+pyyaml==6.0.4
+rich==15.0.0

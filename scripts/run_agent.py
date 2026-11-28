@@ -5,7 +5,8 @@ optimization exactly (a wiring check, not a result). Real model calls need --cli
 the --allow-llm flag and an API key. Literature comes from the cache only
 (scripts/prefetch_literature.py fills it).
 
-Writes runs/agent/<name>_seed<N>.csv (run log), _hypotheses.json and _calls.jsonl.
+Writes runs/agent/<name>_seed<N>.csv (run log), _hypotheses.json, _calls.jsonl and
+_heldout_predictions.json (null if the model's answer failed twice).
 Usage: python -m scripts.run_agent --seeds 0 1 2 3 4 [--ablation no_literature]
 """
 import argparse
@@ -20,7 +21,7 @@ from ccagent.agent import ABLATIONS, AgentChooser, AgentConfig
 from ccagent.data.synonyms import synonyms_by_drug
 from ccagent.evaluation import add_strong_flags, visible_truth
 from ccagent.lab import SimLab, read_heldout
-from ccagent.literature import Exclusions, Literature, PubMed, drug_names
+from ccagent.literature import Exclusions, Literature, PubMed, class_terms, drug_names
 from ccagent.llm import FakeLLMClient, add_llm_args, get_client, top_k_responder
 from ccagent.loop import run_selection
 from ccagent.masking import Masker
@@ -38,7 +39,7 @@ def build_agent(client, ablation: str, seed: int, target: str) -> AgentChooser:
         synonyms_by_drug(pd.read_csv("data/reference/drug_synonyms.csv"))) \
         if ablation == "masked_names" else Masker()
     literature = None if ablation == "no_literature" else \
-        Literature(PubMed(), Exclusions.from_file(), drug_names())
+        Literature(PubMed(), Exclusions.from_file(), drug_names(), class_terms())
     return AgentChooser(
         client=client, annotations=annotations,
         line_summaries=dict(zip(summaries["cell_line"], summaries["summary"], strict=True)),
@@ -83,9 +84,13 @@ def main() -> None:
         client = FakeLLMClient(responder=top_k_responder) if args.client == "fake" \
             else get_client("real", allow_llm=args.allow_llm, run_id=f"{name}_seed{seed}")
         agent = build_agent(client, args.ablation, seed, args.target)
-        log = add_strong_flags(run_selection(SimLab.from_files(), agent, seed=seed), truth)
+        log = run_selection(SimLab.from_files(), agent, seed=seed)
+        predictions = agent.predict_heldout()  # after the last pick; genetics only
+        log = add_strong_flags(log, truth)     # scoring reads the data only now
         stem = out_dir / f"{name}_seed{seed}"
         log.to_csv(f"{stem}.csv", index=False)
+        Path(f"{stem}_heldout_predictions.json").write_text(json.dumps(
+            {"predictions": predictions}, indent=1))
         Path(f"{stem}_hypotheses.json").write_text(json.dumps(agent.book.to_dict(), indent=1))
         with open(f"{stem}_calls.jsonl", "w") as f:
             for call in agent.calls:

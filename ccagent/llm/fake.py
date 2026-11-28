@@ -35,6 +35,7 @@ def top_k_responder(system: str, prompt: str) -> str:
     hypothesize: one statistical hypothesis about the first shortlisted pair
     critique:    keep every hypothesis
     select:      the shortlist's first k rows, which is exactly Bayesian optimization's batch
+    held-out:    no predicted responders
     So an agent run with this responder must reproduce BO pick for pick; any difference means
     the agent and the baselines are not seeing the same candidates.
     """
@@ -45,7 +46,8 @@ def top_k_responder(system: str, prompt: str) -> str:
     import pandas as pd
 
     def section(name: str) -> str:
-        found = re.search(rf"## {re.escape(name)}\n(.*?)(?=\n\n## |\Z)", prompt, re.S)
+        end = r"(?=\n\n## |\n\nYour previous answer|\Z)"
+        found = re.search(rf"## {re.escape(name)}\n(.*?){end}", prompt, re.S)
         return found.group(1) if found else ""
 
     if prompt.startswith("Propose up to"):
@@ -64,4 +66,8 @@ def top_k_responder(system: str, prompt: str) -> str:
         return json.dumps({"picks": [{"exp_id": e, "hypothesis_id": "explore",
                                       "level": "statistical", "reason": "scripted top-k"}
                                      for e in ids]})
+    if prompt.startswith("The run is over"):
+        ids = [h["id"] for h in json.loads(section("Mechanistic hypotheses"))]
+        return json.dumps({"predictions": [{"hypothesis_id": i, "predicted_responders": [],
+                                            "reason": "scripted"} for i in ids]})
     raise ValueError("top_k_responder got a prompt it does not recognize")

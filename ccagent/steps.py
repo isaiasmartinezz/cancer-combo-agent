@@ -1,4 +1,5 @@
-"""The three model steps (hypothesize, critique, select): call, check the answer, retry once.
+"""The model steps (hypothesize, critique, select, and the held-out prediction after the run):
+call, check the answer, retry once.
 
 The model must answer in JSON. Code then checks what a format cannot: cited IDs were actually
 shown, drugs and cell lines are on the shortlist, mechanistic hypotheses name responder lines,
@@ -40,6 +41,8 @@ SCHEMAS = {
     "select": _obj({"picks": {"type": "array", "items": _obj({
         "exp_id": _STR, "hypothesis_id": _STR,
         "level": {"type": "string", "enum": list(LEVELS)}, "reason": _STR})}}),
+    "predict_heldout": _obj({"predictions": {"type": "array", "items": _obj({
+        "hypothesis_id": _STR, "predicted_responders": _STRS, "reason": _STR})}}),
 }
 
 
@@ -184,6 +187,28 @@ def select(client, system, prompt, shortlist: pd.DataFrame, options: list[Hypoth
                   "reason": "model answer invalid twice; fell back to the response model's "
                             "ranking"} for e in shortlist["exp_id"].iloc[:k]]
     return items, record
+
+
+def predict_heldout(client, system, prompt, hypotheses: list[Hypothesis], lines: set[str]):
+    """One prediction per hypothesis, naming only held-out lines. None after two failures (the
+    run then has no held-out test; its picks are unaffected)."""
+    want = sorted(h.id for h in hypotheses)
+
+    def check(items):
+        problems = []
+        got = sorted(str(p.get("hypothesis_id")) for p in items)
+        if got != want:
+            problems.append(f"give exactly one prediction for each of {want}; got {got}")
+        for p in items:
+            label = f"prediction for {p.get('hypothesis_id')}"
+            if bad := _missing(p, {"predicted_responders": list, "reason": str}, label):
+                problems += bad
+                continue
+            if bad := set(p["predicted_responders"]) - lines:
+                problems.append(f"{label}: not among the untested lines: {sorted(bad)}")
+        return problems
+
+    return run_step(client, system, prompt, "predict_heldout", "predictions", check)
 
 
 # ---------- the explanation logged with each pick ----------

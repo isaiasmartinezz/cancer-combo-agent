@@ -161,3 +161,88 @@ def test_ablation_settings_are_checked(tmp_path):
         make_agent(tmp_path, "masked_names", masker=Masker())
     with pytest.raises(ValueError):  # a masking Masker outside the masked ablation
         make_agent(tmp_path, "none", masker=Masker({"D0": []}))
+
+
+# ---------- the held-out prediction after the run ----------
+
+def mechanistic_responder(system, prompt):
+    """top-k picks, but every new hypothesis is mechanistic and predicts responders, and the
+    held-out step names line L0... which is visible, so the first answer must be refused."""
+    out = json.loads(top_k_responder(system, prompt))
+    if prompt.startswith("Propose up to"):
+        for h in out["hypotheses"]:
+            h["level"], h["predicted_responders"] = "mechanistic", ["L1"]
+    if prompt.startswith("The run is over"):
+        bad = "Your previous answer had these problems" not in prompt
+        for p in out["predictions"]:
+            p["predicted_responders"] = ["L0"] if bad else [HELD]
+    return json.dumps(out)
+
+
+def test_heldout_prediction_runs_once_after_the_loop_and_names_only_heldout_lines(tmp_path):
+    agent = make_agent(tmp_path, client=FakeLLMClient(responder=mechanistic_responder))
+    run(agent)
+    before = len(agent.calls)
+    preds = agent.predict_heldout()
+    final = agent.calls[before:]
+    assert [c["step"] for c in final] == ["predict_heldout"] * 2  # refused once, then fixed
+    assert final[0]["problems"] and not final[1]["problems"]
+    assert {p["hypothesis_id"] for p in preds} == {h.id for h in agent.book.active()}
+    assert all(p["predicted_responders"] == [HELD] for p in preds)
+    # the only prompt that names the held-out line, and it shows genetics, not results
+    assert all(HELD not in c["prompt"] for c in agent.calls[:before])
+    assert "secret" in final[0]["prompt"] and "synergy," not in final[0]["prompt"].split(
+        "## Untested")[1]
+
+
+def test_no_mechanistic_hypotheses_means_no_heldout_call(tmp_path):
+    agent = make_agent(tmp_path)
+    run(agent)
+    n = len(agent.calls)
+    assert agent.predict_heldout() == [] and len(agent.calls) == n
+
+
+def test_masked_heldout_prompt_hides_drug_names(tmp_path):
+    agent = make_agent(tmp_path, "masked_names",
+                       client=FakeLLMClient(responder=mechanistic_responder))
+    run(agent)
+    agent.predict_heldout()
+    final = [c["prompt"] for c in agent.calls if c["step"] == "predict_heldout"]
+    assert final and not any(re.search(r"\bD[0-7]\b", p) for p in final)
+
+
+# ---------- literature design (Nov 27) ----------
+
+def test_evidence_rotates_across_the_shortlist(tmp_path):
+    agent = make_agent(tmp_path)
+    pairs = [(f"D{i}", f"D{i + 1}") for i in range(6)]
+    short = pd.DataFrame({"drug_a": [a for a, _ in pairs], "drug_b": [b for _, b in pairs]})
+    chosen = []
+    for r in range(1, 5):
+        agent.round = r
+        chosen.append(agent.evidence_pairs(short))
+    assert chosen[0] == pairs[:3] and chosen[1] == pairs[3:6]
+    assert chosen[2] == pairs[:3]  # nothing fresh left: back to the best pairs
+    assert chosen[3] == pairs[3:6]
+
+
+def test_rotation_off_repeats_the_top_pairs(tmp_path):
+    agent = make_agent(tmp_path)
+    agent.config.rotate_evidence = False
+    short = pd.DataFrame({"drug_a": ["D0", "D1", "D2", "D3"], "drug_b": ["D1", "D2", "D3", "D4"]})
+    agent.round = 1
+    first = agent.evidence_pairs(short)
+    agent.round = 2
+    assert agent.evidence_pairs(short) == first
+
+
+def test_reading_note_only_with_literature(tmp_path):
+    from ccagent.prompts import READING_NOTE
+
+    with_lit, without = make_agent(tmp_path), make_agent(tmp_path, "no_literature")
+    run(with_lit)
+    run(without)
+    lit_prompts = [c["prompt"] for c in with_lit.calls if c["step"] in ("hypothesize",
+                                                                         "critique")]
+    assert lit_prompts and all(READING_NOTE in p for p in lit_prompts)
+    assert not any(READING_NOTE in c["prompt"] for c in without.calls)

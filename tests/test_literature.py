@@ -163,3 +163,50 @@ def test_literature_never_touches_network_in_a_run(tmp_path):
     lit = Literature(PubMed(tmp_path), RULES, {})
     with pytest.raises(CacheMiss):
         lit.for_pair("A", "B", 3)
+
+
+# ---------- literature design (Nov 27): low-information titles and class evidence ----------
+
+def test_low_information_titles_are_dropped_and_logged(tmp_path):
+    q = "q"
+    fake = FakeEutils({q: [("1", "Mitomycin Intravesical Solution: First Approval."),
+                           ("2", "Pharmacokinetics of drug X in rats"),
+                           ("3", "Drug X blocks DNA repair in tumour cells")]})
+    lit = Literature(PubMed(tmp_path, fetch=fake, allow_network=True), Exclusions.parse(""), {})
+    assert [p.pmid for p in lit.search(q, 3)] == ["3"]
+    assert lit.low_information_log == ["PMID:1", "PMID:2"]
+
+
+def test_class_evidence_searches_both_classes_and_skips_papers_already_shown(tmp_path):
+    from ccagent.literature import COMBINATION, class_term
+
+    names = {"MK-8776": ["MK-8776"], "GEMCITABINE": ["GEMCITABINE", "gemcitabine"]}
+    classes = {"MK-8776": ["CHK1 inhibitor"], "GEMCITABINE": []}
+    query = (f'({drug_term(names["MK-8776"])} OR {class_term(["CHK1 inhibitor"])}) AND '
+             f'{drug_term(names["GEMCITABINE"])} AND {COMBINATION} AND cancer[tiab]')
+    fake = FakeEutils({query: [("7", "CHK1 inhibitors sensitise to gemcitabine"),
+                               ("8", "CHK1 inhibition with gemcitabine in pancreatic cancer")]})
+    lit = Literature(PubMed(tmp_path, fetch=fake, allow_network=True), Exclusions.parse(""),
+                     names, classes)
+    assert [p.pmid for p in lit.for_pair_by_class("MK-8776", "GEMCITABINE", 2)] == ["7", "8"]
+    assert [p.pmid for p in lit.for_pair_by_class("MK-8776", "GEMCITABINE", 2,
+                                                  skip=["7"])] == ["8"]
+    assert '"CHK1 inhibitors"[tiab]' in query  # plural form searched too
+
+
+def test_no_class_terms_means_no_class_search(tmp_path):
+    fake = FakeEutils({})
+    lit = Literature(PubMed(tmp_path, fetch=fake, allow_network=True), Exclusions.parse(""),
+                     {"A": ["A"], "B": ["B"]}, {"A": [], "B": []})
+    assert lit.for_pair_by_class("A", "B", 2) == [] and fake.calls == []
+
+
+def test_class_terms_table_covers_every_drug():
+    import pandas as pd
+
+    from ccagent.literature import class_terms
+
+    drugs = set(pd.read_csv("data/reference/drug_annotations.csv")["drug_id"])
+    table = class_terms()
+    assert set(table) == drugs
+    assert all(t.strip() == t and t for terms in table.values() for t in terms)

@@ -109,3 +109,45 @@ One entry per design choice: what was decided, why, and what it replaces. Newest
 ## 2026-11-26: Agent model fixed: Claude Sonnet 5.5, effort medium
 **Decision (Isaias):** every real agent run uses `claude-sonnet-5-5` with adaptive thinking at effort `medium`, set once in `ccagent/llm/settings.py`.
 **Why:** It is the setting iteration 1's two agent runs used, so they stay comparable, and at about $2-3 per run with the hypothesis cap, five seeds on two arms fits the $30 budget. If the model or effort ever changes, every earlier agent result is rerun.
+
+## 2026-11-27: SHELDON added as a method arm (Isaias)
+**Decision (Isaias):** SHELDON (Joshi, Shethia & Lam 2026; stanford-oval/sheldon, release 7fbf027) runs as a further method on the same simulated lab, registered as the SHELDON benchmark `oneil-combo` (`ccagent/sheldon_arm.py`, `scripts/run_sheldon.py`). This reverses the handoff's note that SHELDON was dropped.
+**Why:** It is a published hypothesis-and-observation search harness, so it tests whether a general scientific-reasoning loop does as well as our purpose-built agent with the same information.
+
+## 2026-11-27: SHELDON gets the agent's information as tools, and nothing else
+**Decision:** SHELDON sees the shared first batch in its task and has seven tools: the same 50-candidate shortlist (BO order, same response model), run up to 10 experiments from the latest shortlist, the agent's results summary, drug class/targets, genetics for visible lines, and the agent's cached literature (2 papers per drug or pair query). SHELDON's web search, web fetch and shell are removed (`probes = []`, checked when the config is built).
+**Why:** The comparison is about how the information is used, not what is available. Restricting picks to the current shortlist keeps SHELDON's choice set the same as the agent's; a free-text literature search was not offered because it would reach papers outside the leakage-filtered cache.
+**Check:** a scripted SHELDON that runs the shortlist's first 10 each time reproduces BO pick for pick on a synthetic lab; refused calls spend no budget; held-out lines and outcome labels appear in no tool output.
+
+## 2026-11-27: SHELDON runs at the agent's model and effort, priced at list
+**Decision:** SHELDON's tables predate Sonnet 5.5, so without a fix it would send no effort setting (the model then runs at its default, high) and price calls at its fallback rate ($2.50/$15). A subclass of SHELDON's client sets adaptive thinking and effort `medium` for our model, and the list price ($2/$10) is added; SHELDON's own code is not edited. Its `cache_control` field is passed through `extra_body` because the SDK's `parse()` does not accept it.
+**Why:** Same model and setting as the agent, or the two arms are not comparable. Iteration 1 found and fixed the same two gaps (re-derived here from SHELDON's source).
+
+## 2026-11-27: SHELDON runs until the experiment budget is spent
+**Decision:** The round cap is 40 and the loop stops when the 250 experiments are used (SHELDON's `objective_exhausted`), on a per-seed dollar cap, or when SHELDON has nothing left to test. Spend is recorded in the shared spend log at list prices, so the $30 budget counts it.
+**Why:** Iteration 1's single SHELDON run stopped at its 8-round cap after 118 of 250 experiments (20 strong, $3.91), so it was not comparable with methods that used all 250. Where a run still stops early, it is reported with the experiments it used.
+
+## 2026-11-27: Held-out prediction step added to the agent
+**Decision:** after the 250th experiment, the agent makes one more call: for every mechanistic hypothesis still standing, which held-out lines should respond, from their names, tissue and genetics only (`AgentChooser.predict_heldout`, saved as `_heldout_predictions.json`). Same checks as the other steps (one prediction per hypothesis, held-out lines only, one retry). The masked arm sees codes, not drug names.
+**Why:** the plan's mechanism test (section 9.3) needs these predictions from every real run; adding them later would mean paying for the runs twice. It is the only prompt that names a held-out line, and it comes after the last pick, so it cannot affect selection.
+
+## 2026-11-27: Literature design v3 (Isaias asked to improve the literature arm)
+**Diagnosis (iteration 1, seed 0, literature arm against no literature):** with literature, 63% of hypothesis drug mentions were famous drugs, against 36% without; picks on famous pairs hit 17% against 47% for the no-literature arm's obscure pairs. Every drug got two mechanism papers, so the gap is not missing drug papers: papers naming *both* drugs averaged 2.0 per famous pair, 1.3 per mixed pair and 0.25 per pair of research compounds, and 53 of 288 mechanism papers were approval notices, pharmacokinetics or formulation papers.
+**Decision:** three changes to what the literature arm sees, none tuned on any score:
+1. *Class evidence:* when fewer than 2 papers name both drugs, the rest are papers on the two drug classes used together (class terms in `data/reference/drug_class_terms.csv`, taken from each drug's annotated class wording; drugs whose class is too general, e.g. mitomycin, are searched by name only; paclitaxel uses "taxane" while its annotation is pending). Labelled "their drug classes together (not these exact compounds)".
+2. *Low-information titles dropped* (approval notices, pharmacokinetics, bioequivalence, formulations, errata), logged separately from leakage exclusions.
+3. *Rotation:* a pair that got literature waits two rounds before getting it again, so evidence spreads over the shortlist instead of re-reading the top pairs.
+Plus a reading note shown with the literature: publication volume reflects how much a drug is studied, not how well it combines; the lab's results outweigh papers.
+**Why:** the literature arm was steering toward drugs that are written about, not drugs that combine well in this screen. The no-literature arm's prompts are unchanged, so with versus without literature still isolates the literature.
+**Caveat for the report:** the diagnosis used iteration 1's seed 0, which is also one of the five test seeds. No setting was chosen by its score, but the report should say the design was motivated by seed 0 and give the per-seed results. SHELDON's pair tool gets the same class top-up and reading note.
+
+## 2026-11-27: Drug annotations confirmed by a person
+**Decision (Isaias):** Isaias reviewed the annotations and confirmed them; `drug_signoff.csv` now records Isaias as reviewer for all 38 rows (37 ok, 1 fixed), and `drug_annotations.csv` was rebuilt from it. Paclitaxel was the last one: its class already reads "taxane" (ATC L01CD01), which separates the microtubule stabilizer from the vinca alkaloids (destabilizers, ATC L01CA), so it was marked ok with the wording unchanged. The literature class search uses "taxane" only, since "tubulin inhibitor" would also match the vinca alkaloids.
+**Why:** the handoff recorded the annotations as AI-checked only; the report can now say they were checked by a person.
+
+## 2026-11-27: Iteration 1's agent and SHELDON runs reported as pilot results
+**Decision (Isaias):** iteration 1's seed-0 agent runs (v1 and v2 memory, with and without literature) and its SHELDON run are kept and reported as pilot results, labelled as an earlier code version, not pooled with the new runs. No money is spent rerunning them.
+**Why:** they cost about $22 and motivated the literature v3 design; they are a different code version and library environment, so they inform the story but not the headline comparison.
+
+## 2026-11-27: SHELDON stays in, following the original plan (Isaias)
+**Decision (Isaias):** SHELDON is part of the project as in the Nov 2 plan; the handoff's "dropped" note is set aside.
